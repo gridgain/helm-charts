@@ -1,0 +1,29 @@
+image:
+  repository: gridgain/ultimate
+  tag: 8.9.11-openjdk17-slim
+
+license:
+  mountPath: /opt/gridgain/gridgain-license.xml
+  createSecret: 
+    mountPath: /opt/gridgain/gridgain-license.xml
+    # Insert your license content below
+    content: |
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <gridgain-license version="2.1">
+      </gridgain-license>
+
+auth: 
+  enabled: true
+  users: 
+    server: 
+      name: server1
+      password: password1
+      permissions: "{defaultAllow:true}"
+    client: 
+      name: client2
+      password: password2
+      permissions: "{defaultAllow:false, {cache:'*',permissions:['CACHE_READ']}}"
+    user: 
+      name: user3
+      password: password3
+      permissions: "{defaultAllow:true}"

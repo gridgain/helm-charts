@@ -1,0 +1,33 @@
+#
+# Copyright (C) GridGain Systems. All Rights Reserved.
+#  _________        _____ __________________        _____
+#  __  ____/___________(_)______  /__  ____/______ ____(_)_______
+#  _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+#  / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+#  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+#
+
+{{- if (include "createConfigmap" .) }}
+{{- $outer := . }}
+{{- range $key, $value := .Values.configMapsFromFile }}
+{{- with $outer }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" (include "gridgain.fullname" .) $key }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "gridgain.labels" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
+data:
+  {{ $value.filename }}: |-
+{{- if $value.localpath }}
+{{ tpl ( .Files.Get ( printf "%s/%s" $value.localpath $value.filename ) ) . | indent 4 }}
+{{- else }}
+{{ tpl ( .Files.Get ( printf "files/configmaps/%s" $value.filename ) ) . | indent 4 }}
+{{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

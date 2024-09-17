@@ -1,0 +1,560 @@
+# -- String to partially override common.names.fullname template (will maintain the release name)
+nameOverride: ""
+# -- String to fully override common.names.fullname template
+fullnameOverride: ""
+# -- Add annotations to all the deployed resources
+commonAnnotations: {}
+# -- Map of labels
+labels: {}
+# -- Annotations for GridGain DB resources
+annotations: {}
+# -- Map of labels to add to the pods
+podLabels: {}
+# -- Map of annotations to add to the pods
+podAnnotations: {}
+# -- Add labels to all the deployed resources. May be templated
+customLabels: {}
+
+image:
+  # -- GridGain DB image registry
+  registry: docker.io
+  # -- GridGain DB image repository
+  repository: gridgain/community
+  # -- GridGain DB image tag. Immutable tags are recommended
+  # -- if not set appVersion field from Chart.yaml is used
+  tag:
+  # -- GridGain DB image pull policy
+  # -- Specify a imagePullPolicy [imagePullPolicy](https://kubernetes.io/docs/user-guide/images/#pre-pulling-images)
+  # -- Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  pullPolicy: IfNotPresent
+
+# -- Optionally specify GridGain statefulset [podManagementPolicy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies)
+podManagementPolicy: OrderedReady
+# -- The maximum number of revisions that will be maintained in the StatefulSet's [revision history](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit)
+revisionHistoryLimit: 10
+
+auth: 
+  # -- GridGain DB [authentication configuration](https://www.gridgain.com/docs/latest/administrators-guide/security/authentication)
+  enabled: false
+  # -- Users section. License required to use it. 
+  # @default -- Check defaults below
+  users: 
+  # -- Key. Only server key is required to run server nodes using this user, all the others are optional. 
+    server: 
+      # -- Name of the user to be created. 
+      name: server1
+      # -- Password of the user to be created. 
+      password: password1
+      # -- Permissions of the user to be created. 
+      permissions: "{defaultAllow:true}"
+    client: 
+      name: client2
+      password: password2
+      permissions: "{defaultAllow:false, {cache:'*',permissions:['CACHE_READ']}}"
+    user: 
+      name: user3
+      password: password3
+      permissions: "{defaultAllow:true}"
+
+# -- URL of [Control Center](https://www.gridgain.com/docs/control-center/latest/getting-started/connect/connect-gridgain-cluster). Just regular url required. Disabled by default
+controlCenterUrl: ""
+
+# -- GridGain [modules](https://www.gridgain.com/docs/latest/developers-guide/setup#enabling-modules) to be enabled
+optionLibs: ignite-kubernetes,ignite-rest-http,ignite-log4j2,control-center-agent,ignite-schedule
+# -- JVM options for GridGain DB  nodes
+jvmOpts: |
+  -Xlog:gc*:file=$(IGNITE_WORK_DIR)/grid-gclog.txt:time:filecount=10,filesize=100m 
+  -Djava.net.preferIPv4Stack=true -Xmx2G -Xms1G -XX:MaxMetaspaceSize=250m -XX:MaxDirectMemorySize=1g
+  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$(IGNITE_WORK_DIR) -ea
+  -XX:StartFlightRecording=dumponexit=true,filename=$(IGNITE_WORK_DIR)/gridgain.jfr,maxsize=1g,maxage=6h,settings=profile
+
+# -- GridGain [persistent storage directory](https://www.gridgain.com/docs/latest/developers-guide/persistence/native-persistence#configuring-persistent-storage-directory)
+igniteWorkDir: /persistence
+
+# -- [GridGain DB license](https://www.gridgain.com/docs/latest/installation-guide/licenses) to be created or mounted as a secret. Needed to use GridGain Enterprise Edition (EE) or Ultimate Edition (UE)
+license: {}
+# license:
+# # -- path inside GridGain DB container to mount the file with license
+#   mountPath: /opt/gridgain/gridgain-license.xml
+# # -- Create secret with license from file inside chart folder
+#   fromFile:
+# # -- Relative path to file inside chart folder 
+#     filepath: files/configmaps/gridgain-license.xml
+# # -- Create secret from raw content passed
+#   createSecret: 
+#     mountPath: /opt/gridgain/gridgain-license.xml
+# # -- License raw content
+#     content: |
+#       <?xml version="1.0" somelicense encoding="UTF-8"?>
+# # -- Existing secret with license to be mounted
+#   useExisting:
+# # -- Name of the secret
+#     secretname: somesecret
+# # -- Key in the secret
+#     secretkey: gridgain-license.xml
+
+metrics:
+  # -- Enables prometheus metrics exposing via port 9000. Available since GridGain DB version 8.9.9
+  enabled: false
+
+# -- Number of GridGain cluster replicas
+replicaCount: 1
+
+# -- GridGain DB  main configuration to be injected as ConfigMap. 
+# @default -- Check default values.yaml to view default config
+configMaps: {}
+  # auth-config:
+  #   # -- Key in ConfigMap
+  #   name: auth.xml
+  #   # -- Path to be mounted
+  #   path: /opt/gridgain/config/auth.xml
+  #   # -- subpath to be mounted
+  #   subpath: auth.xml
+  #   content: |
+  #     <?xml version="1.0" encoding="UTF-8"?>
+  #     <beans xmlns="http://www.springframework.org/schema/beans"
+  #           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  #           xsi:schemaLocation="
+  #             http://www.springframework.org/schema/beans
+  #             http://www.springframework.org/schema/beans/spring-beans.xsd">
+  #         <bean class="org.apache.ignite.plugin.security.SecurityCredentials" id="server.cred">
+  #             <constructor-arg value="server"/>
+  #             <constructor-arg value="password"/>
+  #         </bean>
+  #         <bean class="org.apache.ignite.plugin.security.SecurityCredentials" id="client.cred">
+  #             <constructor-arg value="client"/>
+  #             <constructor-arg value="password"/>
+  #         </bean>
+  #     </beans>
+  # default-config:
+  #   # -- Key in ConfigMap
+  #   name: default-config.xml
+  #   # -- Path to be mounted
+  #   path: /opt/gridgain/config/default-config.xml
+  #   # -- subpath to be mounted
+  #   subpath: default-config.xml
+  #   content: |
+  #     <?xml version="1.0" encoding="UTF-8"?>
+  #     <beans xmlns="http://www.springframework.org/schema/beans"
+  #           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  #           xsi:schemaLocation="
+  #             http://www.springframework.org/schema/beans
+  #             http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  #         <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+  #             <property name="discoverySpi">
+  #                 <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+  #                     <property name="ipFinder">
+  #                         <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+  #                             <property name="namespace" value="{{ .Release.Namespace }}"/>
+  #                             <property name="serviceName" value="{{ include "gridgain.fullname" . }}-headless"/>
+  #                         </bean>
+  #                     </property>
+  #                 </bean>
+  #             </property>
+  #             <property name="dataStorageConfiguration">
+  #                 <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+  #                     <property name="defaultDataRegionConfiguration">
+  #                         <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+  #                             <property name="persistenceEnabled" value="true"/>
+  #                         </bean>
+  #                     </property>
+  #                 </bean>
+  #             </property>
+  #             <property name="pluginConfigurations">
+  #               <bean class="org.gridgain.grid.configuration.GridGainConfiguration">
+  #                   <property name="authenticator">
+  #                       <bean class="org.gridgain.grid.security.passcode.PasscodeAuthenticator">
+  #                           <property name="aclProvider">
+  #                               <bean class="org.gridgain.grid.security.passcode.AuthenticationAclBasicProvider">
+  #                                   <constructor-arg>
+  #                                       <map>
+  #                                           <!-- server.cred credentials and associated permissions (everything is allowed) -->
+  #                                           <entry key-ref="server.cred" value="{defaultAllow:true}"/>
+  #                                           <!-- client.cred credentials and associated permissions (only cache reads are allowed) -->
+  #                                           <entry key-ref="client.cred" value="{defaultAllow:false, {cache:'*',permissions:['CACHE_READ']}}"/>
+  #                                       </map>
+  #                                   </constructor-arg>
+  #                               </bean>
+  #                           </property>
+  #                       </bean>
+  #                   </property>
+
+  #                   <!-- Credentials for the current node. -->
+  #                   <property name="securityCredentialsProvider">
+  #                       <bean class="org.apache.ignite.plugin.security.SecurityCredentialsBasicProvider">
+  #                           <constructor-arg ref="server.cred"/>
+  #                       </bean>
+  #                   </property>
+  #               </bean>
+  #             </property>
+  #         </bean>
+  #         <import resource="auth.xml"/>
+  #     </beans>
+
+# -- GridGain DB  main configuration to be injected as ConfigMap from files (files/configmaps)
+configMapsFromFile:
+  default-config:
+    filename: default-config.xml
+    path: /opt/gridgain/config/default-config.xml
+
+# -- Existing configmap with GridGain DB configuration to be mounted to StatefulSet
+existingConfigmap: {}
+# existingConfigmap:
+#   name: configmap-name
+#   path: /blablabla/cm.xml
+
+# -- Array with extra environment variables to add to GridGain DB  nodes
+extraEnvVars: []
+# extraEnvVars:
+#   - name: FOO
+#     value: "bar"
+
+# -- Name of existing ConfigMap containing extra env vars for GridGain DB  nodes
+extraEnvVarsCM: ""
+# -- Name of existing Secret containing extra env vars for GridGain DB  nodes
+extraEnvVarsSecret: ""
+# -- Override default container command (useful when using custom images)
+command: []
+# -- Override default container args (useful when using custom images)
+args: []
+# -- Lifecycle hooks for GridGain DB  container
+lifecycleHooks: {}
+
+# -- Configures (liveness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for GridGain container
+# @default -- Check defaults below
+livenessProbe:
+  # -- Enables livenessProbe on GridGain container
+  enabled: true
+  # -- Path and port for probe
+  httpGet:
+    path: /ignite?cmd=version
+    port: 8080
+  # -- Initial delay seconds for livenessProbe
+  initialDelaySeconds: 5
+  # -- Period seconds for livenessProbe
+  periodSeconds: 30
+  # -- Timeout seconds for livenessProbe
+  timeoutSeconds: 10
+  # -- Failure threshold for livenessProbe
+  failureThreshold: 3
+  # -- Success threshold for livenessProbe
+  successThreshold: 1
+
+# -- Configures (readiness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for GridGain container
+# @default -- Check defaults below
+readinessProbe:
+  # -- Enables readinessProbe on GridGain container
+  enabled: true
+  # -- Path and port for probe
+  httpGet:
+    path: /ignite?cmd=version
+    port: 8080
+  # -- Initial delay seconds for readinessProbe
+  initialDelaySeconds: 30
+  # -- Period seconds for readinessProbe
+  periodSeconds: 10
+  # -- Timeout seconds for readinessProbe
+  timeoutSeconds: 10
+  # -- Failure threshold for readinessProbe
+  failureThreshold: 3
+  # -- Success threshold for readinessProbe
+  successThreshold: 1
+
+# -- Configures (startup probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for GridGain container
+# @default -- Check defaults below
+startupProbe:
+  # -- Enables startupProbe on GridGain container
+  enabled: false
+  # -- Initial delay seconds for startupProbe
+  initialDelaySeconds: 30
+  # -- Period seconds for startupProbe
+  periodSeconds: 10
+  # -- Timeout seconds for startupProbe
+  timeoutSeconds: 1
+  # -- Failure threshold for startupProbe
+  failureThreshold: 15
+  # -- Success threshold for startupProbe
+  successThreshold: 1
+
+# -- GridGain DB  [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits
+# @default -- Check defaults below
+resources:
+  limits:
+    # -- The cpu limit for the GridGain DB  containers
+    cpu: "1"
+    # -- The memory limit for the GridGain DB  containers
+    memory: 2Gi
+  requests:
+    # -- The requested cpu for the GridGain DB  containers
+    cpu: "1"
+    # -- The requested memory for the GridGain DB  containers
+    memory: 2Gi
+
+# -- [Pod Security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for GridGain DB  pods
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# -- [Container Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for GridGain DB container
+containerSecurityContext: {}
+# containerSecurityContext:
+#   seLinuxOptions: {}
+#   runAsUser: 1001
+#   runAsGroup: 1001
+#   runAsNonRoot: true
+#   privileged: false
+#   readOnlyRootFilesystem: true
+#   allowPrivilegeEscalation: false
+#   capabilities:
+#     drop: ["ALL"]
+#   seccompProfile:
+#     type: "RuntimeDefault"
+
+# -- [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for GridGain DB  pods assignment
+affinity: {}
+# -- [Node labels](https://kubernetes.io/docs/user-guide/node-selection/) for GridGain DB  pods assignment
+nodeSelector: {}
+# -- [Tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) for GridGain DB  pods assignment
+tolerations: []
+# -- Name of the [PriorityClass](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for GridGain DB  pods
+priorityClassName: ""
+# -- [Topology Spread Constraints](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods) for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+topologySpreadConstraints: []
+# -- Seconds GridGain DB  pod needs to [terminate gracefully](https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods)
+terminationGracePeriodSeconds: 30
+
+# -- GridGain DB  statefulset [rolling update configuration](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies) parameters
+# @default -- Check default below
+updateStrategy:
+# -- GridGain DB  statefulset strategy type
+  type: RollingUpdate
+# -- GridGain DB  statefulset rolling update configuration parameters
+  rollingUpdate: 
+    partition: 0
+# -- Optionally specify extra list of additional volumeMounts for the GridGain DB  container(s)
+extraVolumeMounts: []
+# -- Optionally specify extra list of additional volumes for the GridGain DB  pod(s)
+extraVolumes: []
+
+# -- Add additional sidecar containers to the GridGain DB  pod(s)
+sidecars: []
+# sidecars:
+#   - name: your-image-name
+#     image: your-image
+#     imagePullPolicy: Always
+#     ports:
+#       - name: portname
+#         containerPort: 1234
+
+# -- Add additional init containers to the GridGain DB  pod(s)
+initContainers: []
+# initContainers:
+#   - name: do-something
+#     image: busybox
+#     command: ['do', 'something']
+# -- Optionally specify extra PodSpec for the GridGain DB  pod(s)
+extraPodSpec: {}
+
+# -- GridGain DB container ports
+# @default -- check default container ports in values.yaml
+containerPorts:
+  # default communication port
+  - containerPort: 47100
+    protocol: TCP
+  # default discovery port
+  - containerPort: 47500
+    protocol: TCP
+  # default JMX port
+  - containerPort: 49112
+    protocol: TCP
+  # default client/JDBC/ODBC port
+  - containerPort: 10800
+    protocol: TCP
+  # default REST API port
+  - containerPort: 8080
+    protocol: TCP
+  # default Management port
+# -- https://www.gridgain.com/docs/latest/administrators-guide/control-script
+  - containerPort: 11211
+    protocol: TCP 
+
+# -- Default GridGain DB  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP. 
+# @default -- check default services configuration in values.yaml
+services:
+  default:
+    type: ClusterIP
+    ports:
+      rest: 8080
+      thin: 10800
+    sessionAffinity: None
+  headless:
+    type: ClusterIP
+    clusterIP: None
+    ports:
+      rest: 8080
+      thin: 10800
+      thick-discovery: 47500
+      thick-communication: 47100
+      jmx: 49112
+      management: 11211
+    sessionAffinity: None
+  # thin:
+  #   type: LoadBalancer
+  # -- Enable [client source IP preservation(https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip)
+  #   externalTrafficPolicy: Cluster
+  #   ports:
+  #     rest: 8080
+  #     sql: 10800
+  #   sessionAffinity: None
+
+# -- GridGain DB  persistence configuration
+# @default -- By default only one volume will be created. Check default values.yaml to view more details
+persistence:
+  volumePermissions:
+    # -- Enable init container that changes the owner and group of the persistent volume
+    enabled: false
+    image:
+      # -- Init container volume-permissions image registry
+      registry: docker.io
+      # -- Init container volume-permissions image repository
+      repository: bitnami/os-shell
+      # -- Init container volume-permissions image tag (immutable tags are recommended)
+      tag: 12-debian-12-r21
+      # -- Init container volume-permissions image pull policy
+      pullPolicy: IfNotPresent
+    # -- Init container resource [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)
+    resources: {}
+
+    # -- Init container [Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+    # Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    # and not the below volumePermissions.containerSecurityContext.runAsUser
+    # @default -- disabled
+    containerSecurityContext:
+      # -- Set SELinux options in container
+      seLinuxOptions: {}
+      # -- User ID for the init container
+      runAsUser: 0
+      # -- Group ID for the init container
+      runAsGroup: 0
+      # -- runAsNonRoot for the init container
+      runAsNonRoot: false
+      # -- seccompProfile.type for the init container
+      seccompProfile:
+        type: RuntimeDefault
+  persistentVolumeClaimRetentionPolicy:
+    # -- Enable Persistent volume retention policy
+    enabled: false
+    # -- Volume retention behavior when the replica count of the StatefulSet is reduced
+    whenScaled: Retain
+    # -- Volume retention behavior that applies when the StatefulSet is deleted
+    whenDeleted: Retain
+  volumes:
+    persistence:
+      # -- Enable GridGain DB  data persistence using PVC
+      enabled: true
+      # -- Name of an existing PVC to use
+      existingClaim: ""
+      # -- The path the volume will be mounted at
+      mountPath: /persistence
+      # -- The subdirectory of the volume to mount to. Useful in dev environments and one PV for multiple services
+      subPath: ""
+      storageClassName: ""
+      # -- PVC Access Mode for GridGain DB volume
+      accessModes:
+        - ReadWriteOnce
+      # -- PVC Storage Request for GridGain DB volume
+      size: 8Gi
+      # -- Annotations for the PVC
+      annotations: {}
+      # -- Labels for the PVC
+      labels: {}
+      # -- Selector to match an existing Persistent Volume (this value is evaluated as a template)
+      selector: {}
+      # selector:
+      #   matchLabels:
+      #     app: my-app
+    # Additional predefined volumes
+    # wal:
+    #   enabled: true
+    #   existingClaim: ""
+    #   mountPath: /wal
+    #   subPath: ""
+    #   storageClassName: ""
+    #   accessModes:
+    #     - ReadWriteOnce
+    #   size: 8Gi
+    #   annotations: {}
+    #   labels: {}
+    #   selector: {}
+    # snapshot:
+    #   enabled: true
+    #   existingClaim: ""
+    #   mountPath: /snapshot
+    #   subPath: ""
+    #   storageClassName: ""
+    #   accessModes:
+    #     - ReadWriteOnce
+    #   size: 8Gi
+    #   annotations: {}
+    #   labels: {}
+    #   selector: {}
+
+# -- [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for GridGain DB to use. . Required to run GridGain DB in multiple replicas.
+# @default -- Check defaults below
+serviceAccount:
+  # -- Enable creation of ServiceAccount for GridGain DB pod
+  create: true
+  # -- The name of the ServiceAccount to use. If not set and create is true, a name is generated using the common.names.fullname template
+  name: ""
+  # -- Allows auto mount of ServiceAccountToken on the serviceAccount created. Can be set to false if pods using this serviceAccount do not need to use K8s API
+  automountServiceAccountToken: true
+  # -- Additional custom annotations for the ServiceAccount
+  annotations: {}
+
+# -- [RBAC configuration](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for ServiceAccount. Required to run GridGain DB in multiple replicas.
+rbac:
+  # -- Creates default Role and RoleBinding
+  create: true
+  # -- Custom RBAC rules to be added
+  rules: []
+  # rules:
+  #   - apiGroups:
+  #       - ""
+  #     resources:
+  #       - pods
+  #     verbs:
+  #       - get
+  #       - list
+
+# -- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+networkPolicy: {}
+# networkPolicy:
+#   create: true
+#   ingress:
+#   - from:
+#     - namespaceSelector:
+#         matchLabels:
+#           kubernetes.io/metadata.name: default
+#     ports:
+#     - port: 8080
+#       protocol: TCP
+#     - port: 10800
+#       protocol: TCP
+#   egress:
+#   - ports:
+#     - port: 53
+#       protocol: UDP
+#     - port: 53
+#       protocol: TCP
+#     to:
+#     - namespaceSelector: {}
+#       podSelector:
+#         matchLabels:
+#           k8s-app: kube-dns
+
+# -- Array of extra objects to deploy with the release (evaluated as a template)
+extraDeploy: []
+# -- Array of extra post install/upgrade hooks to deploy with the release (partially evaluated as a template)
+extraPostHooks: []

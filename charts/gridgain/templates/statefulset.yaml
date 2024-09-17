@@ -1,0 +1,273 @@
+#
+# Copyright (C) GridGain Systems. All Rights Reserved.
+#  _________        _____ __________________        _____
+#  __  ____/___________(_)______  /__  ____/______ ____(_)_______
+#  _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+#  / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+#  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+#
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "gridgain.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "gridgain.labels" . | nindent 4 }}
+  {{- if or .Values.commonAnnotations .Values.annotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "gridgain.fullname" . }}
+  {{- if .Values.podManagementPolicy }}
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  {{- end }}
+  {{- if .Values.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "gridgain.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if .Values.updateStrategy.rollingUpdate }}
+    rollingUpdate: {{- toYaml .Values.updateStrategy.rollingUpdate | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      labels: {{- include "gridgain.podLabels" . | nindent 8 }}
+      {{- if .Values.podAnnotations }}
+      annotations: {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.affinity }}
+      affinity: {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      containers:
+      - name: gridgaindb
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+          - name: OPTION_LIBS
+            value: {{ .Values.optionLibs | default "ignite-kubernetes,control-center-agent" }}
+          - name: IGNITE_QUIET
+            value: "false"
+          - name: IGNITE_WORK_DIR
+            value: {{ .Values.igniteWorkDir | default "/persistence" }}
+          - name: JVM_OPTS
+            value: {{ printf "%s%s" .Values.jvmOpts (include "ccUrl" .) | replace "\n" " "  }}
+          {{- if .Values.extraEnvVars }}
+          {{- toYaml .Values.extraEnvVars | nindent 10 }}
+          {{- end }}
+        resources: {{- required "Gridgain db resources (.Values.resources) are missing!" .Values.resources | toYaml | nindent 10 }}
+        {{- if .Values.containerSecurityContext }}
+        securityContext: {{- toYaml .Values.containerSecurityContext | nindent 10 }}
+        {{- end }}
+        {{- if .Values.startupProbe.enabled }}
+        startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.startupProbe "enabled") "context" $) | nindent 10 }}
+        {{- end }}
+        {{- if .Values.livenessProbe.enabled }}
+        livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 10 }}
+        {{- end }}
+        {{- if .Values.readinessProbe.enabled }}
+        readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.readinessProbe "enabled") "context" $) | nindent 10 }}
+        {{- end }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        {{- if .Values.auth.enabled }}
+        - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "auth" }}
+          mountPath: /opt/gridgain/config/auth.xml
+          subPath: auth.xml
+          readOnly: true
+        {{- end }}
+        {{- if .Values.license.useExisting }}
+        - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "license" }}
+          mountPath: {{ .Values.license.mountPath }}
+          subPath: {{ .Values.license.useExisting.secretkey }}
+          readOnly: true
+        {{- else if or .Values.license.createSecret .Values.license.fromFile  }}
+        - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "license" }}
+          mountPath: {{ .Values.license.mountPath }}
+          subPath: gridgain-license.xml
+          readOnly: true
+        {{- end }}
+        {{- if .Values.extraVolumeMounts }}
+        {{- toYaml .Values.extraVolumeMounts | nindent 8 }}
+        {{- end }}
+        {{- range $key, $value := .Values.persistence.volumes }}
+        {{- if $value.enabled }}
+        - mountPath: {{ $value.mountPath }}
+          name: {{ $key }}
+        {{- end }}
+        {{- end }}
+        {{- range $key, $value := .Values.configMaps }}
+        - name: {{ $key }}
+          mountPath: {{ $value.path }}
+          subPath: {{ $value.subpath }}
+        {{- end }}
+        {{- range $key, $value := .Values.configMapsFromFile }}
+        - name: {{ $key }}
+          mountPath: {{ $value.path }}
+          subPath: {{ $value.filename }}
+        {{- end }}
+        {{- if .Values.existingConfigmap }}
+        - name: {{ .Values.existingConfigmap.name }}
+          mountPath: {{ .Values.existingConfigmap.path }}
+        {{- end }}
+        ports: {{- toYaml .Values.containerPorts | nindent 8 }}
+      {{- $root := .Values }}
+      {{- range .Values.sidecars }}
+      {{- if .enabled }}
+      - name: {{ .name }}
+        image: {{ .image }}
+        command: {{- toYaml .command | nindent 10 }}
+        args: {{- toYaml .args | nindent 10 }}
+        env: {{- toYaml .env | nindent 10 }}
+        resources: {{- toYaml .resources | nindent 10 }}
+        imagePullPolicy: Always
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        {{- range $key, $value := .configMapsMounts }}
+        - name: {{ $value.name }}
+          mountPath: {{ $value.path }}
+          subPath: {{ $value.subpath }}
+        {{- end }}
+        {{- range $key, $value := $root.persistence.volumes }}
+        {{- if $value.enabled }}
+        - mountPath: {{ $value.mountPath }}
+          name: {{ $key }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: registrykey
+      {{- if (or .Values.persistence.volumePermissions.enabled .Values.initContainers) }}
+      initContainers:
+      {{- if .Values.persistence.volumePermissions.enabled }}
+      {{- $root := .Values -}}
+      {{- range $key, $value := .Values.persistence.volumes }}
+      {{- if $value.enabled }}
+      - name: {{ printf "init-chmod-%s" $key }}
+        image: {{ $root.persistence.volumePermissions.image.registry }}/{{ $root.persistence.volumePermissions.image.repository }}:{{ $root.persistence.volumePermissions.image.tag }}
+        imagePullPolicy: {{ $root.persistence.volumePermissions.image.pullPolicy | quote }}
+        resources: {{- toYaml $root.persistence.volumePermissions.resources | nindent 10 }}
+        command:
+          - /bin/sh
+          - -ec
+          - |
+            chown {{ $root.containerSecurityContext.runAsUser }}:{{ $root.podSecurityContext.fsGroup }} {{ $value.mountPath }}
+            chmod 700 {{ $value.mountPath }}
+            find {{ $value.mountPath }} -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
+            xargs -r chown -R {{ $root.containerSecurityContext.runAsUser }}:{{ $root.podSecurityContext.fsGroup }}
+        securityContext: {{- $root.persistence.volumePermissions.containerSecurityContext | toYaml | nindent 10 }}
+        volumeMounts:
+        - name: {{ $key }}
+          mountPath: {{ $value.mountPath }}
+          {{- if $value.subPath }}
+          subPath: {{ $value.subPath }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.initContainers }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 6 }}
+      {{- end }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      {{- if .Values.podSecurityContext }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccount: {{ .Values.serviceAccount.name | default (include "gridgain.fullname" .) }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (include "gridgain.fullname" .) }}
+      {{- end }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      {{- range $key, $value := .Values.persistence.volumes }}
+      {{- if and $value.enabled $value.existingClaim }}
+      - name: {{ $key }}
+        persistentVolumeClaim:
+          claimName: {{ tpl $value.existingClaim $ }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.license.useExisting }}
+      - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "license" }}
+        secret:
+          secretName: {{ .Values.license.useExisting.secretname }}
+      {{- else if or .Values.license.createSecret .Values.license.fromFile }}
+      - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "license" }}
+        secret:
+          secretName: {{ printf "%s-%s" (include "gridgain.fullname" .) "license" }}
+      {{- end }}
+      {{- if .Values.auth.enabled }}
+      - name: {{ printf "%s-%s" (include "gridgain.fullname" .) "auth" }}
+        secret:
+          secretName: {{ printf "%s-%s" (include "gridgain.fullname" .) "auth" }}
+      {{- end }}
+      {{- if .Values.extraVolumes }}
+      {{- toYaml .Values.extraVolumes | nindent 6}}
+      {{- end }}
+      {{- $outer := . }}
+      {{- range $key, $value := .Values.configMaps }}
+      {{- with $outer }}
+      - name: {{ $key }}
+        configMap:
+          defaultMode: 420
+          name: {{ printf "%s-%s" (include "gridgain.fullname" .) $key }}
+      {{- end }}
+      {{- end }}
+      {{- $outer := . }}
+      {{- range $key, $value := .Values.configMapsFromFile }}
+      {{- with $outer }}
+      - name: {{ $key }}
+        configMap:
+          defaultMode: 420
+          name: {{ printf "%s-%s" (include "gridgain.fullname" .) $key }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.existingConfigmap }}
+      - name: {{ .Values.existingConfigmap.name }}
+        configMap:
+          name: {{ .Values.existingConfigmap.name }}
+      {{- end }}
+  {{- if .Values.persistence.persistentVolumeClaimRetentionPolicy.enabled }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ .Values.persistence.persistentVolumeClaimRetentionPolicy.whenDeleted }}
+    whenScaled: {{ .Values.persistence.persistentVolumeClaimRetentionPolicy.whenScaled }}
+  {{- end }}
+  volumeClaimTemplates:
+  {{- range $key, $value := .Values.persistence.volumes }}
+  {{- if and $value.enabled (not $value.existingClaim) }}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: {{ $key }}
+      {{- if .annotations }}
+      annotations: {{- include "common.tplvalues.render" (dict "value" .annotations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .labels }}
+      labels: {{- include "common.tplvalues.render" (dict "value" .labels "context" $) | nindent 8 }}
+      {{- end }}
+    spec:
+      accessModes: {{- toYaml $value.accessModes | nindent 8 }}
+      storageClassName: {{ $value.storageClassName }}
+      resources:
+        requests:
+          storage: {{ $value.size }}
+      volumeMode: Filesystem
+  {{- end }}
+  {{- end }}

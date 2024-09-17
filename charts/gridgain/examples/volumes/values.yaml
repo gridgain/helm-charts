@@ -1,0 +1,165 @@
+image:
+  repository: gridgain/ultimate
+  tag: 8.9.11-openjdk17-slim
+
+license:
+  mountPath: /opt/gridgain/gridgain-license.xml
+  createSecret: 
+    mountPath: /opt/gridgain/gridgain-license.xml
+    # Insert your license content below
+    content: |
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <gridgain-license version="2.1">
+      </gridgain-license>
+
+persistence:
+  volumes:
+    wal:
+      enabled: true
+      mountPath: /wal
+      size: 8Gi
+      accessModes:
+        - ReadWriteOnce
+    persistence:
+      enabled: true
+      mountPath: /persistence
+      size: 8Gi
+      accessModes:
+        - ReadWriteOnce
+    snapshot:
+      enabled: true
+      mountPath: /snapshots
+      size: 8Gi
+      accessModes:
+        - ReadWriteOnce
+
+# Make default config from file null to provide custom config as a plaintext
+configMapsFromFile:
+  default-config: null
+
+configMaps:
+  default-config:
+    name: default-config.xml
+    path: /opt/gridgain/config/default-config.xml
+    subpath: default-config.xml
+# Config to configure snapshots and wal
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+
+      <!--
+          Copyright (C) GridGain Systems. All Rights Reserved.
+          _________        _____ __________________        _____
+          __  ____/___________(_)______  /__  ____/______ ____(_)_______
+          _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+          / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+          \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+      -->
+
+      <beans xmlns="http://www.springframework.org/schema/beans"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:util="http://www.springframework.org/schema/util"
+              xsi:schemaLocation="
+              http://www.springframework.org/schema/beans
+              http://www.springframework.org/schema/beans/spring-beans.xsd
+              http://www.springframework.org/schema/util
+              http://www.springframework.org/schema/util/spring-util.xsd">
+          <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+              <property name="authenticationEnabled" value="false"/>
+              <property name="failureDetectionTimeout" value="10000"/>
+              <property name="clientFailureDetectionTimeout" value="10000"/>
+              <property name="networkTimeout" value="10000"/>
+
+              <property name="gridLogger">
+                  <bean class="org.apache.ignite.logger.log4j2.Log4J2Logger">
+                      <constructor-arg type="java.lang.String" value="/opt/gridgain/config/ignite-log4j2.xml"/>
+                  </bean>
+              </property>
+              <property name="communicationSpi">
+                  <bean class="org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi">
+                      <!-- Sets socket write timeout for TCP connection. -->
+                      <property name="socketWriteTimeout" value="10000"/>
+                      <property name="messageQueueLimit"  value="1024"/>
+                  </bean>
+              </property>
+
+              <property name="discoverySpi">
+                  <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                      <property name="ipFinder">
+                          <!--
+                              Enables Kubernetes IP finder and setting custom namespace and service names.
+                          -->
+                          <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                              <property name="namespace" value="{{ .Release.Namespace }}"/>
+                              <property name="serviceName" value="{{ include "gridgain.fullname" . }}-headless"/>
+                          </bean>
+                      </property>
+                  </bean>
+              </property>
+
+              <property name="transactionConfiguration">
+                  <bean class="org.apache.ignite.configuration.TransactionConfiguration">
+                      <property name="txTimeoutOnPartitionMapExchange" value="#{60L * 1000L}"/>
+                      <property name="DefaultTxTimeout" value="20000"/>
+                  </bean>
+              </property>
+
+              <property name="dataStorageConfiguration">
+                  <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                      <property name="metricsEnabled" value="true"/>
+
+                      <property name="storagePath" value="/persistence/db"/>
+
+                      <!--property name="walMode" value="${wal_mode}"/-->
+                      <property name="walPath" value="/wal"/>
+                      <property name="walArchivePath" value="/wal"/>
+                      <property name="walSegmentSize" value="#{512L * 1024 * 1024}"/>
+                      <property name="maxWalArchiveSize" value="#{5L * 1024 * 1024 * 1024}"/>
+                      <!-- Enable write throttling. -->
+                      <property name="writeThrottlingEnabled" value="true"/>
+
+                      <property name="defaultDataRegionConfiguration">
+                          <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                              <property name="initialSize" value="#{1024L * 1024L * 1024L}"/>
+                              <property name="maxSize" value="#{1600L * 1024L * 1024L}"/>
+                              <property name="metricsEnabled" value="true"/>
+                              <property name="persistenceEnabled" value="true"/>
+                          </bean>
+                      </property>
+                      <property name="dataRegionConfigurations">
+                      <list>
+                          <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                              <property name="name" value="in-memory"/>
+                              <property name="initialSize" value="#{10L * 1024 * 1024}"/>
+                              <property name="maxSize" value="#{1024L * 1024L * 1024L}"/>
+                              <property name="metricsEnabled" value="true"/>
+                          </bean>
+                      </list>
+                      </property>
+                  </bean>
+              </property>
+
+              <property name="pluginConfigurations">
+                  <bean class="org.gridgain.grid.configuration.GridGainConfiguration">
+                    <property name="rollingUpdatesEnabled" value="true"/>
+                    <property name="snapshotConfiguration">
+                      <bean class="org.gridgain.grid.configuration.SnapshotConfiguration">
+                          <property name="snapshotsPath" value="/snapshots"/>
+                      </bean>
+                    </property>
+                  </bean>
+              </property>
+
+              <property name="eventStorageSpi">
+                  <bean class="org.apache.ignite.spi.eventstorage.memory.MemoryEventStorageSpi">
+                  </bean>
+              </property>
+
+              <property name="workDirectory" value="/persistence/work"/>
+
+              <property name="userAttributes">
+                  <map>
+                      <entry key="IGNITE_CLUSTER_NAME" value="{{ include "gridgain.fullname" . }}.{{ .Release.Namespace }}"/>
+                  </map>
+              </property>
+          </bean>
+      </beans>

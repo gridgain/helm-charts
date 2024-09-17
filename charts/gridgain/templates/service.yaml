@@ -1,0 +1,52 @@
+#
+# Copyright (C) GridGain Systems. All Rights Reserved.
+#  _________        _____ __________________        _____
+#  __  ____/___________(_)______  /__  ____/______ ____(_)_______
+#  _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+#  / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+#  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+#
+
+{{- range $key, $value := .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gridgain.fullname" $ }}-{{ $key }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels: {{- include "gridgain.labels" $ | nindent 4 }}
+  {{- if ( or $value.annotations $.Values.commonAnnotations ) }}
+  annotations: 
+    {{- if $value.annotations }}
+    {{- toYaml $value.annotations | indent 4 }}
+    {{- end }}
+    {{- if $.Values.commonAnnotations }}
+    {{- toYaml $.Values.commonAnnotations | indent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ $value.type }}
+  {{- if (eq $value.type "LoadBalancer") }}
+  externalTrafficPolicy: {{ $value.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq $value.type "LoadBalancer") (not (empty $value.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ $value.loadBalancerSourceRanges | toJson}}
+  {{- end }}
+  {{- if and (eq $value.type "LoadBalancer") (not (empty $value.loadBalancerIP)) }}
+  loadBalancerIP: {{ $value.loadBalancerIP }}
+  {{- end }}
+  {{- if and $value.clusterIP (eq $value.type "ClusterIP") }}
+  clusterIP: {{ $value.clusterIP }}
+  {{- end }}
+  {{- if $value.sessionAffinity }}
+  sessionAffinity: {{ $value.sessionAffinity }}
+  {{- end }}
+  ports:
+  {{- range $name, $port := $value.ports }}
+  - name: {{ $name }}
+    port: {{ required "Port is not provided!" $port }}
+    protocol: TCP
+    targetPort: {{ required "Target port is not provided!" $port }}
+  {{- end }}
+  selector: {{- include "gridgain.selectorLabels" $ | nindent 4 }}
+{{- end }}
