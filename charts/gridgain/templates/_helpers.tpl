@@ -1,0 +1,92 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "gridgain.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "gridgain.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "gridgain.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "gridgain.labels" -}}
+helm.sh/chart: {{ include "gridgain.chart" . }}
+{{ include "gridgain.selectorLabels" . }}
+{{- if .Values.customLabels }}
+{{ include "common.tplvalues.render" (dict "value" .Values.customLabels "context" $) }}
+{{- end }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "gridgain.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "gridgain.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Pod labels
+*/}}
+{{- define "gridgain.podLabels" -}}
+{{ include "gridgain.selectorLabels" . }}
+{{- if .Values.podLabels }}
+{{ include "common.tplvalues.render" (dict "value" .Values.podLabels "context" $) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "gridgain.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "gridgain.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{- define "createConfigmap" -}}
+{{- if not .Values.existingConfigmap -}}
+    {{- true -}}
+{{- else -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "ccUrl" -}}
+{{- if .Values.controlCenterUrl -}}
+    {{ printf "%s%s" "-Dcontrol.center.agent.uris=" .Values.controlCenterUrl }}
+{{- else -}}
+    {{ printf "-Dcontrol.center.agent.uris=" }}
+{{- end -}}
+{{- end -}}
+
+

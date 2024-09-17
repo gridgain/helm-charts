@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                        <property name="namespace" value="{{ .Release.Namespace }}"/>
+                        <property name="serviceName" value="{{ include "gridgain.fullname" . }}-headless"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+        <property name="dataStorageConfiguration">
+            <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                <property name="defaultDataRegionConfiguration">
+                    <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                        <property name="persistenceEnabled" value="true"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+        {{- if .Values.auth.enabled }}
+        <property name="pluginConfigurations">
+            <bean class="org.gridgain.grid.configuration.GridGainConfiguration">
+                <property name="authenticator">
+                    <bean class="org.gridgain.grid.security.passcode.PasscodeAuthenticator">
+                        <property name="aclProvider">
+                            <bean class="org.gridgain.grid.security.passcode.AuthenticationAclBasicProvider">
+                                <constructor-arg>
+                                    <map>
+                                        {{- range $key, $value := .Values.auth.users }}
+                                        <entry key-ref="{{ $key }}.cred" value="{{ .permissions }}"/>
+                                        {{- end }}
+                                    </map>
+                                </constructor-arg>
+                            </bean>
+                        </property>
+                    </bean>
+                </property>
+                <!-- Credentials for the current node. -->
+                <property name="securityCredentialsProvider">
+                    <bean class="org.apache.ignite.plugin.security.SecurityCredentialsBasicProvider">
+                        <constructor-arg ref="server.cred"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+        {{- end }}
+    </bean>
+    {{- if .Values.auth.enabled }}
+    <import resource="auth.xml"/>
+    {{- end }}
+    {{- if .Values.metrics.enabled }}
+    <bean id="opencensusWrapper" class="org.springframework.beans.factory.config.MethodInvokingBean">
+        <property name="staticMethod" value="io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector.createAndRegister"/>
+    </bean>
+
+    <bean id="httpServer" class="io.prometheus.client.exporter.HTTPServer">
+        <constructor-arg type="java.lang.String" value="localhost"/>
+        <constructor-arg type="int" value="9000"/>
+        <constructor-arg type="boolean" value="true"/>
+    </bean>
+    {{- end }}
+</beans>

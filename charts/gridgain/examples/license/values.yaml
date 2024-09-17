@@ -1,0 +1,12 @@
+image:
+  repository: gridgain/ultimate
+  tag: 8.9.11-openjdk17-slim
+
+license:
+  mountPath: /opt/gridgain/gridgain-license.xml
+  createSecret: 
+    mountPath: /opt/gridgain/gridgain-license.xml
+    # Insert your license content below
+    content: |
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      </gridgain-license>

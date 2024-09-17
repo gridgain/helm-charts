@@ -1,0 +1,40 @@
+# Make default config from file null to provide custom config as a plaintext
+configMapsFromFile:
+  default-config: null
+
+configMaps:
+  default-config:
+    name: default-config.xml
+    path: /opt/gridgain/config/default-config.xml
+    subpath: default-config.xml
+# Provide any custom gg config below
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="
+              http://www.springframework.org/schema/beans
+              http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+          <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+              <property name="discoverySpi">
+                  <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                      <property name="ipFinder">
+                          <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                              <property name="namespace" value="{{ .Release.Namespace }}"/>
+                              <property name="serviceName" value="{{ include "gridgain.fullname" . }}-headless"/>
+                          </bean>
+                      </property>
+                  </bean>
+              </property>
+              <property name="dataStorageConfiguration">
+                  <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                      <property name="defaultDataRegionConfiguration">
+                          <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                              <property name="persistenceEnabled" value="true"/>
+                          </bean>
+                      </property>
+                  </bean>
+              </property>
+          </bean>
+      </beans>
