@@ -36,9 +36,15 @@ spec:
   template:
     metadata:
       labels: {{- include "gridgain.podLabels" . | nindent 8 }}
-      {{- if .Values.podAnnotations }}
-      annotations: {{- toYaml .Values.podAnnotations | nindent 8 }}
-      {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config-file: {{ include (print $.Template.BasePath "/configmap-from-file.yaml") . | sha256sum }}
+        checksum/config-auth: {{ include (print $.Template.BasePath "/secret-auth.yaml") . | sha256sum }}
+        checksum/license: {{ include (print $.Template.BasePath "/secret-license.yaml") . | sha256sum }}
+        checksum/license-file: {{ include (print $.Template.BasePath "/secret-from-file.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.affinity }}
       affinity: {{- toYaml .Values.affinity | nindent 8 }}
