@@ -1,0 +1,15 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "cc-spring-app.controller.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "cc-spring-app.labels" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels: {{- include "cc-spring-app.selectorLabels" . | nindent 6 }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}

@@ -1,0 +1,30 @@
+{{- if and .Values.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "cc-spring-app.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "cc-spring-app.labels" $ | nindent 4 }}
+  {{- if or .Values.commonAnnotations .Values.annotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if (or (eq .Values.service.type "LoadBalancer") (eq .Values.service.type "NodePort")) }}
+  {{- if hasKey .Values.service "externalTrafficPolicy" -}}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  loadBalancerIP: {{ default "" .Values.service.loadBalancerIP | quote }}
+  {{- end }}
+  ports:
+  - name: http
+    port: {{ .Values.service.httpPort }}
+    targetPort: {{ .Values.containerPort }}
+{{- if hasKey .Values.service "nodePort" }}
+    nodePort: {{ .Values.service.nodePort }}
+{{- end }}
+  selector: {{- include "cc-spring-app.selectorLabels" $ | nindent 4 }}
+{{- end -}}

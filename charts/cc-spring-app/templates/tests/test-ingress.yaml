@@ -1,0 +1,38 @@
+{{- if .Values.ingress.test -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "cc-spring-app.fullname" . }}-test-ingress"
+  labels: {{- include "cc-spring-app.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: yauritux/busybox-curl:latest
+      command:
+      - /bin/sh
+      - -ec
+      args:
+      - |
+        curl -v -X GET \
+          --connect-timeout 5 \
+          --max-time 5 \
+          --retry 18 \
+          --retry-delay 10 \
+          --retry-max-time 420 \
+          --retry-all-errors https://{{ .Values.ingress.host }}/actuator/health
+  restartPolicy: Never
+{{- with .Values.nodeSelector }}
+  nodeSelector:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.affinity }}
+  affinity:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.tolerations }}
+  tolerations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- end}}
