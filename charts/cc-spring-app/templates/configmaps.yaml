@@ -1,0 +1,17 @@
+{{- $outer := . -}}
+{{- range $key, $value := .Values.configMaps }}
+{{- with $outer -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cc-spring-app.fullname" . }}-{{ $key }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels: {{- include "cc-spring-app.labels" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- toYaml .Values.commonAnnotations | nindent 4 }}
+  {{- end }}
+data:
+  {{ $value.name }}: |
+{{ $value.content | indent 4  }}
+{{- end }}
+{{- end }}

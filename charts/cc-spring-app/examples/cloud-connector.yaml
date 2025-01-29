@@ -1,0 +1,73 @@
+serviceAccount:
+  create: true
+
+rbac:
+  create: false
+
+extraEnv:
+  - name: JVM_OPTS
+    value: >-
+      -Xms1024m
+      -Xmx1024m
+      -Dcom.sun.management.jmxremote
+      -Dcom.sun.management.jmxremote.ssl=false
+      -Dcom.sun.management.jmxremote.port=3333
+      -Dcom.sun.management.jmxremote.authenticate=false
+      -Djava.rmi.server.hostname=$(POD_IP)
+      -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: status.podIP
+
+securityContext:
+  runAsUser: 10001
+  fsGroup: 10001
+
+resources:
+  limits:
+   cpu: 1
+   memory: 2048Mi
+  requests:
+   cpu: 1
+   memory: 2048Mi
+
+service:
+  enabled: true
+  httpPort: 80
+  type: ClusterIP
+
+spring:
+  test: true
+  trustKubernetesCertificates: true
+  config:
+    type: file
+    name: application.yaml
+    path: /opt/app/config
+    content: |-
+      server:
+        port: 3000
+
+      management:
+        endpoints:
+          web:
+            exposure:
+              include: health,info,metrics,loggers
+      
+      connector:
+        cc-uri: http://cc-backend.namespace.svc.cluster.local:3000
+        heartbeat.thread-pool-size: 30
+
+ingress:
+  enabled: true
+  test: false
+  hosts:
+    - host: "connector.example.io"
+      paths:
+        - path: "/api/v1/metrics"
+        - path: "/api/v1/events"
+  tls:
+  - hosts:
+      - connector.example.io
+    secretName: connector.example.io-tls

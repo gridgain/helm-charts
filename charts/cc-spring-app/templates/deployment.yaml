@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cc-spring-app.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "cc-spring-app.labels" . | nindent 4 }}
+  {{- if or .Values.commonAnnotations .Values.annotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "cc-spring-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "cc-spring-app.podLabels" . | nindent 8 }}
+      {{- if .Values.podAnnotations }}
+      annotations: {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ template "cc-spring-app.serviceAccountName" . }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [ '/bin/bash' ]
+          args:
+          - '-c'
+          - './entry.sh'
+          env:
+            {{- if .Values.spring.trustKubernetesCertificates }}
+            - name: KUBERNETES_TRUST_CERTIFICATES
+              value: "true"
+            {{- end }}
+            {{- if and (eq .Values.spring.config.type "file") (hasKey .Values.spring.config "path") }}
+            - name: SPRING_CONFIG_LOCATION
+              value: "{{ .Values.spring.config.path }}/{{ .Values.spring.config.name }}"
+            {{- end }}
+            {{- if hasKey .Values.spring.config "secretName" }}
+            - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+              value: "/opt/app/secret.yml"
+            {{- end }}
+            {{- if .Values.extraEnv }}
+              {{- toYaml .Values.extraEnv | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            {{- if and (eq .Values.spring.config.type "file") (hasKey .Values.spring.config "content") }}
+            - name: config-file
+              mountPath: "{{ .Values.spring.config.path }}/{{ .Values.spring.config.name }}"
+              subPath: {{ .Values.spring.config.name }}
+            {{- end }}
+            {{- if hasKey .Values.spring.config "secretName" }}
+            - name: secret-file
+              mountPath: /opt/app/secret.yml
+              subPath: secret.yml
+            {{- end }}
+            {{- range $key, $value := .Values.configMaps }}
+            - name: {{ $key }}
+              mountPath: {{ $value.path }}
+              subPath: {{ $value.name }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 12 }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- if and (eq .Values.spring.config.type "file") (hasKey .Values.spring.config "content") }}
+        - name: config-file
+          configMap:
+            name: {{ include "cc-spring-app.fullname" . }}
+      {{- end }}
+      {{- if hasKey .Values.spring.config "secretName" }}
+        - name: secret-file
+          secret:
+            secretName: {{ .Values.spring.config.secretName }}
+      {{- end }}
+      {{- $outer := . }}
+      {{- range $key, $value := .Values.configMaps }}
+      {{- with $outer }}
+        - name: {{ $key }}
+          configMap:
+            name: {{ include "cc-spring-app.fullname" . }}-{{ $key }}
+      {{- end }}
+      {{- end }}
