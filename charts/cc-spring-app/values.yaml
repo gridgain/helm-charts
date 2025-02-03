@@ -29,6 +29,9 @@ image:
   # -- Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   pullPolicy: IfNotPresent
 
+# -- Name of the secret to pull a docker image from [private registry](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+imagePullSecrets: []
+
 # -- [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for Control Center Spring application to use
 # @default -- Check defaults below
 serviceAccount:
