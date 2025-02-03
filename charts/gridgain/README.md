@@ -1,6 +1,6 @@
 # gridgain
 
-![Version: 1.0.1](https://img.shields.io/badge/Version-1.0.1-informational?style=flat-square) ![AppVersion: 8.9.11](https://img.shields.io/badge/AppVersion-8.9.11-informational?style=flat-square)
+![Version: 1.0.2](https://img.shields.io/badge/Version-1.0.2-informational?style=flat-square) ![AppVersion: 8.9.11](https://img.shields.io/badge/AppVersion-8.9.11-informational?style=flat-square)
 
 GridGain is a Unified Real-Time Data Platform by the original creators of Apache Ignite. It enables a simplified and optimized data architecture for enterprises that require extreme speed, massive scale, and high availability from their data ecosystem.
 
