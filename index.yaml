@@ -3,6 +3,19 @@ entries:
   cc-spring-app:
   - apiVersion: v1
     appVersion: 1.0.0
+    created: "2025-02-03T17:15:01.203255801Z"
+    description: Helm chart to deploy Control Center Spring applications
+    digest: 871a8d954fdad69c4a71a8374ae91d8b9ba26a66b801b08eaf9b1c3b32691448
+    home: https://www.gridgain.com/products/control-center
+    keywords:
+    - gridgain
+    - cc-spring-app
+    name: cc-spring-app
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/cc-spring-app-1.0.1/cc-spring-app-1.0.1.tgz
+    version: 1.0.1
+  - apiVersion: v1
+    appVersion: 1.0.0
     created: "2025-01-30T08:13:09.796516534Z"
     description: Helm chart to deploy Control Center Spring applications
     digest: e9abf701fb8ac2a6cf69b14b2f7fcf412a308fea8e688bec744c80c45bdc0a2e
@@ -15,6 +28,24 @@ entries:
     - https://github.com/gridgain/helm-charts/releases/download/cc-spring-app-1.0.0/cc-spring-app-1.0.0.tgz
     version: 1.0.0
   gridgain:
+  - apiVersion: v2
+    appVersion: 8.9.11
+    created: "2025-02-03T17:15:01.43846386Z"
+    description: GridGain is a Unified Real-Time Data Platform by the original creators
+      of Apache Ignite. It enables a simplified and optimized data architecture for
+      enterprises that require extreme speed, massive scale, and high availability
+      from their data ecosystem.
+    digest: ccfb9ec1361ad716d3fc2239c1150e25b1a8ac2fe0fe37e5c1d97c616a85b8a8
+    home: https://www.gridgain.com/
+    maintainers:
+    - name: GridGain Systems, Inc. All Rights Reserved
+      url: https://www.gridgain.com/
+    name: gridgain
+    sources:
+    - https://github.com/gridgain/helm-charts/tree/main/charts/gridgain
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/gridgain-1.0.2/gridgain-1.0.2.tgz
+    version: 1.0.2
   - apiVersion: v2
     appVersion: 8.9.11
     created: "2024-10-22T14:14:56.761571764Z"
@@ -51,4 +82,4 @@ entries:
     urls:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain-1.0.0/gridgain-1.0.0.tgz
     version: 1.0.0
-generated: "2025-01-30T08:13:09.79653054Z"
+generated: "2025-02-03T17:15:01.438483326Z"
