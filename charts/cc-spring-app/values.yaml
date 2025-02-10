@@ -33,7 +33,7 @@ image:
 imagePullSecrets: []
 
 # -- [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for Control Center Spring application to use
-# @default -- Check defaults below
+# @default -- Use default values.yaml to check defaults
 serviceAccount:
   # -- Enable creation of ServiceAccount for Control Center Spring application pod
   create: true
@@ -49,10 +49,12 @@ rbac:
       verbs: ["get","list"]
 
 # -- Spring configuration for Control Center Spring application
+# @default -- Use default values.yaml to check defaults
 spring:
   # -- Ensures that Spring trusts Kubernetes certificate for use with service discovery, configuration, etc.
   trustKubernetesCertificates: true
   # -- Customized config for Control Center Spring application. by default will be rendered to `/opt/app/config/application.yml`
+  # @default -- Use default values.yaml to check defaults
   config:
     # -- Currently supports only file
     type: file
@@ -61,19 +63,15 @@ spring:
     # -- Path of the config
     path: /opt/app/config
     # -- Contents of config in YAML
+    # @default -- Use default values.yaml to check defaults
     content: |-
-      server:
-        port: 3000
-
-      management:
-        endpoints:
-          web:
-            exposure:
-              include: health,info,metrics,loggers
-      
       connector:
-        cc-uri: http://cc-backend.svc.cluster.local:3000
-        heartbeat.thread-pool-size: 30
+        cc-url: https://portal.gridgain.com/
+        # Connector url reachable from monitored clusters node. This url is used for cluster exporters configuration.
+        base-url: https://connector.example.io
+        name: Embedded Nebula Connector
+        username: <provide your ControlCenter username here>
+        password: <provide your ControlCenter password here>
 
 # -- Control Center Spring application container ports
 containerPort: 3000
@@ -88,7 +86,7 @@ securityContext:
   fsGroup: 10001
 
 # -- Control Center Spring application  [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits
-# @default -- Check defaults below
+# @default -- Use default values.yaml to check defaults
 resources:
   limits:
     # -- The cpu limit for the Control Center Spring application  containers
@@ -102,7 +100,7 @@ resources:
     memory: 512Mi
 
 # -- Configures (liveness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container
-# @default -- Check defaults below
+# @default -- Use default values.yaml to check defaults
 livenessProbe:
   # -- Path and port for probe
   httpGet:
@@ -114,7 +112,7 @@ livenessProbe:
   periodSeconds: 10
 
 # -- Configures (readiness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container
-# @default -- Check defaults below
+# @default -- Use default values.yaml to check defaults
 readinessProbe:
   # -- Path and port for probe
   httpGet:

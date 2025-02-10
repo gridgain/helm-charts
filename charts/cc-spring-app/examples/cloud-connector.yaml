@@ -46,18 +46,13 @@ spring:
     name: application.yaml
     path: /opt/app/config
     content: |-
-      server:
-        port: 3000
-
-      management:
-        endpoints:
-          web:
-            exposure:
-              include: health,info,metrics,loggers
-      
       connector:
-        cc-uri: http://cc-backend.namespace.svc.cluster.local:3000
-        heartbeat.thread-pool-size: 30
+        cc-url: https://portal.gridgain.com/
+        # Connector url reachable from monitored clusters node. This url is used for cluster exporters configuration.
+        base-url: https://connector.example.io
+        name: Embedded Nebula Connector
+        username: <provide your ControlCenter username here>
+        password: <provide your ControlCenter password here>
 
 ingress:
   enabled: true

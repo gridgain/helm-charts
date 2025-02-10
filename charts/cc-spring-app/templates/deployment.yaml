@@ -34,21 +34,21 @@ spec:
           - '-c'
           - './entry.sh'
           env:
-            {{- if .Values.spring.trustKubernetesCertificates }}
-            - name: KUBERNETES_TRUST_CERTIFICATES
-              value: "true"
-            {{- end }}
-            {{- if and (eq .Values.spring.config.type "file") (hasKey .Values.spring.config "path") }}
-            - name: SPRING_CONFIG_LOCATION
-              value: "{{ .Values.spring.config.path }}/{{ .Values.spring.config.name }}"
-            {{- end }}
-            {{- if hasKey .Values.spring.config "secretName" }}
-            - name: SPRING_CONFIG_ADDITIONAL_LOCATION
-              value: "/opt/app/secret.yml"
-            {{- end }}
-            {{- if .Values.extraEnv }}
-              {{- toYaml .Values.extraEnv | nindent 12 }}
-            {{- end }}
+          {{- if .Values.spring.trustKubernetesCertificates }}
+          - name: KUBERNETES_TRUST_CERTIFICATES
+            value: "true"
+          {{- end }}
+          {{- if and (eq .Values.spring.config.type "file") (hasKey .Values.spring.config "path") }}
+          - name: SPRING_CONFIG_LOCATION
+            value: "{{ .Values.spring.config.path }}/{{ .Values.spring.config.name }}"
+          {{- end }}
+          {{- if hasKey .Values.spring.config "secretName" }}
+          - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+            value: "/opt/app/secret.yml"
+          {{- end }}
+          {{- if .Values.extraEnv }}
+            {{- toYaml .Values.extraEnv | nindent 10 }}
+          {{- end }}
           volumeMounts:
             - name: data
               mountPath: /data
