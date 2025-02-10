@@ -21,6 +21,7 @@ Helm chart to deploy Control Center Spring applications
 1. Add GridGain Helm repository
 ```console
 helm repo add gridgain https://gridgain.github.io/helm-charts/ 
+helm repo update
 ```
 2. Prepare `values.yaml` relevant for your release, make sure you defined all the placeholders, check examples for more details
 3. Install release
