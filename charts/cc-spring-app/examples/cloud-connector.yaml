@@ -1,9 +1,12 @@
+# Define if you need to create a service account
 serviceAccount:
   create: true
 
+# No need to create RBAC for Cloud Connector
 rbac:
   create: false
 
+# Extra JVM_OPTS required to run Cloud Connector
 extraEnv:
   - name: JVM_OPTS
     value: >-
@@ -21,23 +24,27 @@ extraEnv:
         apiVersion: v1
         fieldPath: status.podIP
 
+# Security context to run Cloud Connector defined here
 securityContext:
   runAsUser: 10001
   fsGroup: 10001
 
+# Default resources for Cloud Connector
 resources:
   limits:
-   cpu: 1
-   memory: 2048Mi
+    cpu: 1
+    memory: 2048Mi
   requests:
-   cpu: 1
-   memory: 2048Mi
+    cpu: 1
+    memory: 2048Mi
 
+# By default Cloud Connector will be exposed to k8s network using ClusterIP service and 80 port
 service:
   enabled: true
   httpPort: 80
   type: ClusterIP
 
+# Default Spring configuration
 spring:
   test: true
   trustKubernetesCertificates: true
@@ -45,20 +52,18 @@ spring:
     type: file
     name: application.yaml
     path: /opt/app/config
+    # Please define your name of Connector and Nebula/ControlCenter username and password to attach it
+    # All the other spring properties can be customized as well
     content: |-
-      server:
-        port: 3000
-
-      management:
-        endpoints:
-          web:
-            exposure:
-              include: health,info,metrics,loggers
-      
       connector:
-        cc-uri: http://cc-backend.namespace.svc.cluster.local:3000
-        heartbeat.thread-pool-size: 30
+        cc-url: https://portal.gridgain.com/
+        # Connector url reachable from monitored clusters node. This url is used for cluster exporters configuration.
+        base-url: https://connector.example.io
+        name: Embedded Nebula Connector
+        username: <provide your ControlCenter username here>
+        password: <provide your ControlCenter password here>
 
+# Configure Ingress if you would like to expose your Cloud Connector outside of kubernetes network
 ingress:
   enabled: true
   test: false

@@ -1,10 +1,41 @@
 # cc-spring-app
 
-![Version: 1.0.1](https://img.shields.io/badge/Version-1.0.1-informational?style=flat-square) ![AppVersion: 1.0.0](https://img.shields.io/badge/AppVersion-1.0.0-informational?style=flat-square)
+![Version: 1.0.2](https://img.shields.io/badge/Version-1.0.2-informational?style=flat-square) ![AppVersion: 2025-02-14](https://img.shields.io/badge/AppVersion-2025--02--14-informational?style=flat-square)
 
 Helm chart to deploy Control Center Spring applications
 
 **Homepage:** <https://www.gridgain.com/products/control-center>
+
+## Maintainers
+
+| Name | Email | Url |
+| ---- | ------ | --- |
+| GridGain Systems, Inc. All Rights Reserved |  | <https://www.gridgain.com/> |
+
+## Source Code
+
+* <https://github.com/gridgain/helm-charts/tree/main/charts/cc-spring-app>
+
+## TL;DR
+
+1. Add GridGain Helm repository
+```console
+helm repo add gridgain https://gridgain.github.io/helm-charts/ 
+helm repo update
+```
+2. Prepare `values.yaml` relevant for your release, make sure you defined all the placeholders, check examples for more details
+3. Install release
+```console
+helm install my-release gridgain/cc-spring-app -f values.yaml
+```
+
+## Prerequisites
+
+- Kubernetes 1.26+
+- Helm 3.11.3+
+- PV provisioner support in the persistence configuration
+
+Older version of Kubernetes and Helm were not tested so use it at your peril.  
 
 ## Values
 
@@ -21,11 +52,12 @@ Helm chart to deploy Control Center Spring applications
 | image.pullPolicy | string | `"IfNotPresent"` | Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent' |
 | image.repository | string | `"gridgain/control-center-cloud-connector"` | Control Center Spring application image repository, cloud-connector will be used by default |
 | image.tag | string | `nil` | if not set appVersion field from Chart.yaml is used |
+| imagePullSecrets | list | `[]` | Name of the secret to pull a docker image from [private registry](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) |
 | ingress | object | check example of configuration in values.yaml | [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) configuration |
 | ingress.enabled | bool | `false` | If true, Control Center Spring application Ingress will be created |
 | ingress.tls | list | `[{"hosts":["connector.example.io"],"secretName":"connector.example.io-tls"}]` | Ingress TLS configuration secrets, secret must be manually created in the namespace |
 | labels | object | `{}` | Map of labels |
-| livenessProbe | object | Check defaults below | Configures (liveness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
+| livenessProbe | object | Use default values.yaml to check defaults | Configures (liveness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
 | livenessProbe.httpGet | object | `{"path":"/actuator/health","port":"http"}` | Path and port for probe |
 | livenessProbe.initialDelaySeconds | int | `300` | Initial delay seconds for livenessProbe |
 | livenessProbe.periodSeconds | int | `10` | Period seconds for livenessProbe |
@@ -38,23 +70,23 @@ Helm chart to deploy Control Center Spring applications
 | rbac | object | `{"create":true,"rules":[{"apiGroups":[""],"resources":["services","pods","endpoints","configmaps"],"verbs":["get","list"]}]}` | [RBAC configuration](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for ServiceAccount |
 | rbac.create | bool | `true` | Creates default Role and RoleBinding |
 | rbac.rules | list | `[{"apiGroups":[""],"resources":["services","pods","endpoints","configmaps"],"verbs":["get","list"]}]` | Custom RBAC rules to be added |
-| readinessProbe | object | Check defaults below | Configures (readiness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
+| readinessProbe | object | Use default values.yaml to check defaults | Configures (readiness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
 | readinessProbe.httpGet | object | `{"path":"/actuator/health","port":"http"}` | Path and port for probe |
 | readinessProbe.initialDelaySeconds | int | `60` | Initial delay seconds for livenessProbe |
 | readinessProbe.periodSeconds | int | `10` | Period seconds for livenessProbe |
 | replicaCount | int | `1` | Number of Control Center Spring application replicas |
-| resources | object | Check defaults below | Control Center Spring application  [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits |
+| resources | object | Use default values.yaml to check defaults | Control Center Spring application  [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits |
 | resources.limits.cpu | string | `"300m"` | The cpu limit for the Control Center Spring application  containers |
 | resources.limits.memory | string | `"512Mi"` | The memory limit for the Control Center Spring application  containers |
 | resources.requests.cpu | string | `"300m"` | The requested cpu for the Control Center Spring application  containers |
 | resources.requests.memory | string | `"512Mi"` | The requested memory for the Control Center Spring application  containers |
 | securityContext | object | `{"fsGroup":10001,"runAsUser":10001}` | [Pod Security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for Control Center Spring application  pods |
 | service | object | check default services configuration in values.yaml | Default Control Center Spring application  service configuration |
-| serviceAccount | object | Check defaults below | [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for Control Center Spring application to use |
+| serviceAccount | object | Use default values.yaml to check defaults | [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for Control Center Spring application to use |
 | serviceAccount.create | bool | `true` | Enable creation of ServiceAccount for Control Center Spring application pod |
-| spring | object | `{"config":{"content":"server:\n  port: 3000\n\nmanagement:\n  endpoints:\n    web:\n      exposure:\n        include: health,info,metrics,loggers\n\nconnector:\n  cc-uri: http://cc-backend.svc.cluster.local:3000\n  heartbeat.thread-pool-size: 30","name":"application.yaml","path":"/opt/app/config","type":"file"},"trustKubernetesCertificates":true}` | Spring configuration for Control Center Spring application |
-| spring.config | object | `{"content":"server:\n  port: 3000\n\nmanagement:\n  endpoints:\n    web:\n      exposure:\n        include: health,info,metrics,loggers\n\nconnector:\n  cc-uri: http://cc-backend.svc.cluster.local:3000\n  heartbeat.thread-pool-size: 30","name":"application.yaml","path":"/opt/app/config","type":"file"}` | Customized config for Control Center Spring application. by default will be rendered to `/opt/app/config/application.yml` |
-| spring.config.content | string | `"server:\n  port: 3000\n\nmanagement:\n  endpoints:\n    web:\n      exposure:\n        include: health,info,metrics,loggers\n\nconnector:\n  cc-uri: http://cc-backend.svc.cluster.local:3000\n  heartbeat.thread-pool-size: 30"` | Contents of config in YAML |
+| spring | object | Use default values.yaml to check defaults | Spring configuration for Control Center Spring application |
+| spring.config | object | Use default values.yaml to check defaults | Customized config for Control Center Spring application. by default will be rendered to `/opt/app/config/application.yml` |
+| spring.config.content | string | Use default values.yaml to check defaults | Contents of config in YAML |
 | spring.config.name | string | `"application.yaml"` | Name of the config |
 | spring.config.path | string | `"/opt/app/config"` | Path of the config |
 | spring.config.type | string | `"file"` | Currently supports only file |
