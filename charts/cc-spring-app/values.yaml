@@ -20,7 +20,7 @@ replicaCount: 1
 
 image:
   # -- Control Center Spring application image repository, cloud-connector will be used by default
-  repository: gridgain/control-center-cloud-connector
+  repository: gridgain/cloud-connector
   # -- Control Center Spring application image tag. Immutable tags are recommended
   # -- if not set appVersion field from Chart.yaml is used
   tag:
