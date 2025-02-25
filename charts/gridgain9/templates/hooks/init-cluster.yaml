@@ -1,0 +1,75 @@
+#
+# Copyright (C) GridGain Systems. All Rights Reserved.
+#  _________        _____ __________________        _____
+#  __  ____/___________(_)______  /__  ____/______ ____(_)_______
+#  _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+#  / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+#  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+#
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "gridgain9.fullname" . }}-init-job
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "gridgain9.labels" . | nindent 4 }}
+  {{- if or .Values.commonAnnotations .Values.annotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  template:
+    spec:
+      {{- if .Values.affinity }}
+      affinity: {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      containers:
+      # Command to init the cluster. URL and host must be the name of the service you created before. Port is 10300 as the management port.
+      - args:
+        - -ec
+        - |
+          set -x
+          apt update && apt-get install -y bind9-host
+          host -tsrv _cluster._tcp.{{ include "gridgain9.fullname" . }}-headless
+          GG_NODES=$(host -tsrv _cluster._tcp.{{ include "gridgain9.fullname" . }}-headless | grep 'SRV record' | awk '{print $8}' | awk -F. '{print $1}' | paste -sd ',')
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --metastorage-group $GG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:10300 --config-files=/opt/gridgain/etc/license.conf
+        command:
+        - /bin/sh
+        # Specify the Docker image with the GridGain 9 CLI and its version.
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: IfNotPresent
+        name: cluster-init
+        resources: {}
+        volumeMounts:
+        {{- if .Values.license.useExisting }}
+        - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+          mountPath: {{ .Values.license.mountPath }}
+          subPath: {{ .Values.license.useExisting.secretkey }}
+          readOnly: true
+        {{- else if or .Values.license.createSecret .Values.license.fromFile  }}
+        - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+          mountPath: {{ .Values.license.mountPath }}
+          subPath: license.conf
+          readOnly: true
+        {{- end }}
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 120
+      volumes:
+      {{- if .Values.license.useExisting }}
+      - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+        secret:
+          secretName: {{ .Values.license.useExisting.secretname }}
+      {{- else if or .Values.license.createSecret .Values.license.fromFile }}
+      - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+        secret:
+          secretName: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+      {{- end }}

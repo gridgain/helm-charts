@@ -1,0 +1,67 @@
+#
+# Copyright (C) gridgain9 Systems. All Rights Reserved.
+#  _________        _____ __________________        _____
+#  __  ____/___________(_)______  /__  ____/______ ____(_)_______
+#  _  / __  __  ___/__  / _  __  / _  / __  _  __ `/__  / __  __ \
+#  / /_/ /  _  /    _  /  / /_/ /  / /_/ /  / /_/ / _  /  _  / / /
+#  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
+#
+
+{{- $root := .Values -}}
+{{- $fullname := include "gridgain9.fullname" . -}}
+{{- $release := .Release -}}
+{{- range .Values.extraPostHooks }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s" $fullname "hook" }}
+  namespace: {{ $release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  template:
+    spec:
+      {{- if $root.affinity }}
+      affinity: {{- toYaml $root.affinity | nindent 8 }}
+      {{- end }}
+      {{- if $root.nodeSelector }}
+      nodeSelector: {{- toYaml $root.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $root.tolerations }}
+      tolerations: {{- toYaml $root.tolerations | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .restartPolicy }}
+      {{- if $root.serviceAccount.create }}
+      serviceAccount: {{ $root.serviceAccount.name }}
+      serviceAccountName: {{ $root.serviceAccount.name }}
+      {{- end }}
+      containers:
+      - name: post-hook
+        {{- if .args }}
+        args: {{- include "common.tplvalues.render" (dict "value" .args "context" $) | nindent 8 }}
+        {{- end }}
+        {{- if .command }}      
+        command: {{- include "common.tplvalues.render" (dict "value" .command "context" $) | nindent 8 }}
+        {{- end }}
+        image: {{ .image }}
+        {{- if .envVars }}
+        env: {{- include "common.tplvalues.render" (dict "value" .envVars "context" $) | trim | nindent 8 }}
+        {{- end }}
+        {{- if .configMapMounts }}
+        volumeMounts:
+        {{- range .configMapMounts }}
+        - name: {{ .key }}
+          mountPath: {{ .path }}
+          subPath: {{ .subpath }}
+        {{- end }}
+        {{- end }}
+      {{- if .configMapMounts }}
+      volumes:
+      {{- range .configMapMounts }}
+      - name: {{ .key }}
+        configMap:
+          defaultMode: 0755
+          name: {{ printf "%s-%s" $fullname .key }}
+      {{- end }}
+      {{- end }}
+{{- end }}

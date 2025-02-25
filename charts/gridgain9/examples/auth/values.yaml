@@ -1,0 +1,28 @@
+license:
+# -- path inside GridGain container to mount the file with license
+  mountPath: /opt/gridgain/etc/license.conf
+# -- Create secret from raw content passed
+  createSecret: 
+    mountPath: /opt/gridgain/etc
+# -- License raw content
+    content: |
+      ignite {
+        security {
+          enabled:true,
+          authentication.providers:[{
+            name:default,
+            type:basic,
+            users:[
+              {
+                username:ignite,
+                displayName:administrator,
+                password:ignite,
+                roles:["system"]
+              }
+            ]
+          }]
+        }
+        license {
+          content:"<Put your license here>"
+        }
+      }
