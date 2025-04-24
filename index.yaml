@@ -3,6 +3,20 @@ entries:
   cc-spring-app:
   - apiVersion: v1
     appVersion: "2025-02-14"
+    created: "2025-04-24T08:45:47.833036804Z"
+    description: Helm chart to deploy Control Center Spring applications
+    digest: 3a4b24487f47c2025bbb25833790aa1e31c7db1941180726904424dd2627171f
+    home: https://www.gridgain.com/products/control-center
+    keywords:
+    - gridgain
+    - cloud-connector
+    - cc-spring-app
+    name: cc-spring-app
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/cc-spring-app-1.0.3/cc-spring-app-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v1
+    appVersion: "2025-02-14"
     created: "2025-02-14T14:07:04.769876525Z"
     description: Helm chart to deploy Control Center Spring applications
     digest: a29a8353f528a7fc02558dbc5a7f67ccd7dd7faee12ee13fdb17c9d91f2321e4
@@ -112,4 +126,4 @@ entries:
     urls:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.0.0/gridgain9-1.0.0.tgz
     version: 1.0.0
-generated: "2025-02-25T15:16:24.693545318Z"
+generated: "2025-04-24T08:45:47.833059747Z"
