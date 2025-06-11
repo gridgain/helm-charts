@@ -14,6 +14,14 @@ A Helm chart to deploy GridGain 9
 
 * <https://github.com/gridgain/helm-charts/tree/main/charts>
 
+## Limitations and Considerations
+
+When running GridGain 9 in a Kubernetes environment, the node configuration becomes **read-only** and cannot be modified using the `gridgain9 node config update` CLI command. This is by design, as node configuration is managed via Kubernetes resources.
+
+> **Warning**
+>
+> While it is technically possible to make the node configuration writable by using an init container that copies the mounted configuration from one location to another, we **strongly discourage** this approach. It is not native to the Kubernetes model, and any changes made to the configuration will be lost after pod restarts or re-deployments.
+
 ## Values
 
 | Key | Type | Default | Description |
