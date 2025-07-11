@@ -20,6 +20,7 @@ GridGain is a Unified Real-Time Data Platform by the original creators of Apache
 
 ```console
 helm repo add gridgain https://gridgain.github.io/helm-charts/ 
+helm repo update
 helm install my-release gridgain/gridgain
 ```
 
