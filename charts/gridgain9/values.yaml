@@ -29,12 +29,22 @@ image:
   pullPolicy: IfNotPresent
 
 # -- Optionally specify GridGain statefulset [podManagementPolicy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies)
-podManagementPolicy: Parallel
+podManagementPolicy: OrderedReady
 # -- The maximum number of revisions that will be maintained in the StatefulSet's [revision history](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit)
 revisionHistoryLimit: 10
 
 # -- GridGain [persistent storage directory](https://www.gridgain.com/docs/latest/developers-guide/persistence/native-persistence#configuring-persistent-storage-directory)
 gridgainWorkDir: /persistence
+
+# -- GridGain storage configuration
+# @default -- Check defaults below
+storage:
+  # -- Storage profile configuration for GridGain data storage
+  profile:
+    # -- Percentage of memory limit to use for default storage profile (0-100)
+    # -- The actual sizeBytes will be calculated as: memory_limit * percentage / 100
+    # -- Default: 60% of memory limit
+    memoryPercentage: 60
 
 # -- [GridGain license](https://www.gridgain.com/docs/latest/installation-guide/licenses) to be created or mounted as a secret. Needed to use GridGain Enterprise Edition (EE) or Ultimate Edition (UE)
 license: {}
@@ -90,9 +100,6 @@ configMapsFromFile:
   gridgain-config:
     filename: gridgain-config.conf
     path: /opt/gridgain/etc/gridgain-config.conf
-  logging-conf:
-    filename: logging.conf
-    path: /opt/gridgain/etc/gridgain.java.util.logging.properties
 
 # -- Existing configmap with GridGain configuration to be mounted to StatefulSet
 existingConfigmap: {}
@@ -187,26 +194,38 @@ resources:
     # -- The requested memory for the GridGain  containers
     memory: 2Gi
 
+# -- Hook job [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits for init and recovery jobs
+# @default -- Check defaults below
+hookResources:
+  limits:
+    # -- The cpu limit for the hook job containers
+    cpu: "1"
+    # -- The memory limit for the hook job containers
+    memory: 2Gi
+  requests:
+    # -- The requested cpu for the hook job containers
+    cpu: "500m"
+    # -- The requested memory for the hook job containers
+    memory: 1Gi
+
 # -- [Pod Security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for GridGain  pods
 podSecurityContext:
-  fsGroup: 2000
+  fsGroup: 1001
   runAsNonRoot: true
-  runAsUser: 1000
+  runAsUser: 1001
 
 # -- [Container Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for GridGain container
-containerSecurityContext: {}
-# containerSecurityContext:
-#   seLinuxOptions: {}
-#   runAsUser: 1001
-#   runAsGroup: 1001
-#   runAsNonRoot: true
-#   privileged: false
-#   readOnlyRootFilesystem: true
-#   allowPrivilegeEscalation: false
-#   capabilities:
-#     drop: ["ALL"]
-#   seccompProfile:
-#     type: "RuntimeDefault"
+containerSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
 
 # -- [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for GridGain  pods assignment
 affinity: {}
@@ -291,7 +310,7 @@ services:
 persistence:
   volumePermissions:
     # -- Enable init container that changes the owner and group of the persistent volume
-    enabled: false
+    enabled: true
     image:
       # -- Init container volume-permissions image registry
       registry: docker.io

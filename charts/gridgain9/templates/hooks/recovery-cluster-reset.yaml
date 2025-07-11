@@ -10,11 +10,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "gridgain9.fullname" . }}-init-job
+  name: {{ include "gridgain9.fullname" . }}-update-cmg-job
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "gridgain9.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-upgrade
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": before-hook-creation
   {{- if or .Values.commonAnnotations .Values.annotations }}
@@ -37,7 +37,6 @@ spec:
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
       containers:
-      # Command to init the cluster. URL and host must be the name of the service you created before. Port is 10300 as the management port.
       - args:
         - -ec
         - |
@@ -46,7 +45,7 @@ spec:
           # Get the number of replicas from the StatefulSet or use default
           REPLICAS=${REPLICAS:-1}
           
-          # Wait for GridGain service to be available and all nodes to be ready
+                    # Wait for GridGain service to be available and all nodes to be ready
           echo "Waiting for GridGain service to be available..."
           SERVICE_HOST="{{ include "gridgain9.fullname" . }}-headless"
           SERVICE_PORT="{{ .Values.services.headless.ports.management }}"
@@ -105,18 +104,18 @@ spec:
           done
           
           # Log the approach being used
-          echo "Using StatefulSet naming pattern for cluster initialization"
+          echo "Performing CMG node group update"
           echo "Replica count: $REPLICAS"
           echo "CMG size: $CMG_SIZE"
           echo "CMG nodes: $CMG_NODES"
           
-          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --cluster-management-group $CMG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license=/opt/gridgain/etc/license.conf
+          /opt/gridgain9cli/bin/gridgain9 recovery cluster reset --cluster-management-group $CMG_NODES --metastorage-replication-factor $CMG_SIZE --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }}
         command:
         - /bin/bash
         # Specify the Docker image with the GridGain 9 CLI and its version.
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: IfNotPresent
-        name: cluster-init
+        name: update-cmg
         resources:
           {{- toYaml .Values.hookResources | nindent 10 }}
         env:
@@ -145,4 +144,4 @@ spec:
       - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
         secret:
           secretName: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
-      {{- end }}
+      {{- end }} 
