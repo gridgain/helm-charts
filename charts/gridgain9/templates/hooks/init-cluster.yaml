@@ -41,7 +41,7 @@ spec:
           apt update && apt-get install -y bind9-host
           host -tsrv _cluster._tcp.{{ include "gridgain9.fullname" . }}-headless
           GG_NODES=$(host -tsrv _cluster._tcp.{{ include "gridgain9.fullname" . }}-headless | grep 'SRV record' | awk '{print $8}' | awk -F. '{print $1}' | paste -sd ',')
-          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --metastorage-group $GG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:10300 --config-files=/opt/gridgain/etc/license.conf
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --metastorage-group $GG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:10300 --license=/opt/gridgain/etc/license.conf
         command:
         - /bin/sh
         # Specify the Docker image with the GridGain 9 CLI and its version.
