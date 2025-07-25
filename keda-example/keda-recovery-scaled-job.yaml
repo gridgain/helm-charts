@@ -7,10 +7,10 @@ spec:
   jobTargetRef:
     template:
       spec:
-        securityContext:
-          runAsUser: 0
-          runAsGroup: 0
-          fsGroup: 0
+        # securityContext:
+        #   runAsUser: 0
+        #   runAsGroup: 0
+        #   fsGroup: 0
         containers:
           - name: recovery
             image: gridgain/gridgain9:9.1.1
