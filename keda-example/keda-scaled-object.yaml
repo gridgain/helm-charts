@@ -1,0 +1,52 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gridgain-autoscale
+  namespace: gridgain
+spec:
+  scaleTargetRef:
+    kind: StatefulSet
+    name: gridgain-cluster
+
+  pollingInterval: 30
+  cooldownPeriod: 120
+
+  minReplicaCount: 2  # Set initial number of replics
+  maxReplicaCount: 5
+
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          selectPolicy: Disabled
+        scaleUp:
+          stabilizationWindowSeconds: 60  # Increase if needed
+          selectPolicy: Max
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 120
+
+  triggers:
+    # Uncomment and modify the following section to enable CPU usage based autoscaling
+    # - type: prometheus
+    #   metadata:
+    #     name: cpu-usage
+    #     serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+    #     query: sum(os_system_load_average{job="gridgain"})
+    #     threshold: "0.8"
+    #     activationThreshold: "0.6"
+    - type: prometheus
+      name: heap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+        query: |
+          sum(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+        threshold: "0.7"
+    - type: prometheus
+      name: nonheap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+        query: |
+          sum(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+        threshold: "0.7"

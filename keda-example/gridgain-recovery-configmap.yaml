@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gridgain-recovery-script
+  namespace: gridgain
+data:
+  recovery.sh: |
+    #!/bin/bash
+    set -e
+
+    # Pre 9.1.5
+    echo "[INFO] Install bind9-host for nodes discovery..."
+    apt update && apt install -y bind9-host netcat-openbsd
+
+    echo "[INFO] Checking readiness of GridGain nodes..."
+    read -ra GRIDGAIN_NODES <<< $(host -tsrv _cluster._tcp.gridgain-svc-headless | grep 'SRV record' | awk '{print $8}' | awk -F. '{print $1}' | paste -sd ' ')
+    GRIDGAIN_NODES=($(printf '%s\n' "${GRIDGAIN_NODES[@]}" | sort))
+
+    for node in "${GRIDGAIN_NODES[@]}"; do
+      echo "[INFO] Pinging $node..."
+      for i in {1..10}; do
+        if nc -z "${node}.gridgain-svc-headless" 10300; then
+          echo "[INFO] $node is ready."
+          break
+        fi
+        echo "[WARN] $node not ready yet. Retry $i..."
+        sleep 5
+      done
+    done
+
+    echo "[INFO] All nodes are ready. Checking cluster status..."
+
+    total_nodes=${#GRIDGAIN_NODES[@]}
+    metastorage_replication_factor=1
+
+    cluster_info=$(/opt/gridgain9cli/bin/gridgain9 cluster status --url=http://gridgain-svc-headless:10300)
+    cluster_cmg_raw=$(echo "$cluster_info" | grep -oP 'cmgNodes: \[\K[^\]]+')
+    IFS=',' read -ra cluster_cmg <<< "$cluster_cmg_raw"
+    cluster_status=$(echo "$cluster_info" | grep -oP 'status: \K\w+')
+
+    if [ "$total_nodes" -le 3 ]; then
+        cmg_nodes=("${GRIDGAIN_NODES[@]}")
+        metastorage_replication_factor=${total_nodes}
+    elif [ "$total_nodes" -eq 4 ]; then
+        cmg_nodes=("${GRIDGAIN_NODES[@]:0:3}")
+        metastorage_replication_factor=3
+    elif [ "$total_nodes" -ge 5 ] && [ "$total_nodes" -lt 8 ]; then
+        cmg_nodes=("${GRIDGAIN_NODES[@]:0:5}")
+        metastorage_replication_factor=5
+    else
+        cmg_nodes=("${GRIDGAIN_NODES[@]:0:7}")
+        metastorage_replication_factor=7
+    fi
+
+    cmg_nodes_comma_separated=$(IFS=','; echo "${cmg_nodes[*]}")
+
+    if [[ "$cluster_status" != "active" ]]; then
+      echo "[ERROR] Cluster status is not active: $cluster_status"
+      exit 1
+    fi
+
+    is_recovery_needed=false
+    echo "[INFO] Cluster CMG nodes: ${cluster_cmg[*]}, count: ${#cluster_cmg[@]}"
+    echo "[INFO] Cluster TARGET CMG nodes: ${cmg_nodes[*]}, count: ${#cmg_nodes[@]}"
+
+    if [ "${#cmg_nodes[@]}" -ne "${#cluster_cmg[@]}" ]; then
+      is_recovery_needed=true
+    else
+      for node in "${cmg_nodes[@]}"; do
+        if [[ ! "${cluster_cmg[*]}" =~ "$node" ]]; then
+          is_recovery_needed=true
+          break
+        fi
+      done
+    fi
+
+    if $is_recovery_needed; then
+      echo "[WARN] CMG differs, performing recovery..."
+      /opt/gridgain9cli/bin/gridgain9 recovery cluster reset \
+        --url=http://gridgain-svc-headless:10300 \
+        --cluster-management-group="${cmg_nodes_comma_separated}" \
+        --metastorage-replication-factor="${metastorage_replication_factor}"
+    else
+      echo "[INFO] Cluster is active and CMG is up to date."
+    fi
+
+    echo "[INFO] Done."

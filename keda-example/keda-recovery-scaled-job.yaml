@@ -1,0 +1,51 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: gridgain-recovery
+  namespace: gridgain
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          fsGroup: 0
+        containers:
+          - name: recovery
+            image: gridgain/gridgain9:9.1.1
+            command: ["/bin/bash", "/scripts/recovery.sh"]
+            volumeMounts:
+            - name: script-vol
+              mountPath: /scripts
+        restartPolicy: Never
+        volumes:
+        - name: script-vol
+          configMap:
+            name: gridgain-recovery-script
+    backoffLimit: 1
+  pollingInterval: 30
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  maxReplicaCount: 1
+  triggers:
+    # - type: prometheus
+    #   metadata:
+    #     serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+    #     query: avg(os_system_load_average{job="gridgain"})
+    #     threshold: "0.8"
+    #     activationThreshold: "0.6"
+    - type: prometheus
+      name: heap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+        query: |
+          avg(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+        threshold: "0.7"
+    - type: prometheus
+      name: nonheap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-server.keda.svc.cluster.local:80
+        query: |
+          avg(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+        threshold: "0.7"

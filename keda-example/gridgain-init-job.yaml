@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cluster-init
+  namespace: gridgain
+spec:
+  template:
+    spec:
+      containers:
+      # Command to init the cluster. URL and host must be the name of the service you created before. Port is 10300 as the management port.
+      - args:
+        - -ec
+        - |
+          apt update && apt-get install -y bind9-host
+          GG_NODES=$(host -tsrv _cluster._tcp.gridgain-svc-headless | grep 'SRV record' | awk '{print $8}' | awk -F. '{print $1}' | paste -sd ',')
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name=gridgain --url=http://gridgain-svc-headless:10300 --license=/opt/gridgain/etc/license.conf
+        command:
+        - /bin/sh
+        # Specify the Docker image with the GridGain 9 CLI and its version.
+        image: gridgain/gridgain9:9.1.1
+        imagePullPolicy: IfNotPresent
+        name: cluster-init
+        resources: {}
+        volumeMounts:
+        # The license required to be mounted to cluster-init job.
+        - mountPath: /opt/gridgain/etc/license.conf
+          name: license-vol
+          subPath: license.conf
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 120
+      volumes:
+      - name: license-vol
+        configMap:
+          name: gridgain-license
