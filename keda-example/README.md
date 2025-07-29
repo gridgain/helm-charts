@@ -29,16 +29,12 @@ The deployment is broken down into the following steps:
    ```
 
 3. **Create GridGain Configuration:**
-   Create the `ConfigMap` and `Secret` for the GridGain cluster.
-   - `gridgain-config.conf`: Main GridGain configuration.
-   - `gridgain-license.conf`: GridGain license file.
-   - `gridgain-recovery-configmap.yaml`: Configuration for rebalancing.
-   - `jmx-configmap.yaml`: JMX configuration for Prometheus.
+   Create the `ConfigMap`s for the GridGain cluster.
    ```sh
    kubectl create configmap gridgain-config --from-file=gridgain-config.conf -n gridgain
    kubectl create configmap gridgain-license --from-file=gridgain-license.conf -n gridgain
-   kubectl apply -n gridgain -f jmx-configmap.yaml
-   kubectl apply -n gridgain -f gridgain-recovery-configmap.yaml
+   kubectl create configmap jmx-config --from-file=jmx.yaml -n gridgain
+   kubectl create configmap gridgain-recovery-script --from-file=gridgain-recovery.sh -n gridgain
    ```
 
 4. **Deploy the GridGain Cluster:**
@@ -83,7 +79,7 @@ In `gridgain-sts.yaml`, update the `env` section for the `gridgain-node` contain
             value: /gg9-work
           # Set JVM args for JMX agent and memory limits
           - name: GRIDGAIN9_EXTRA_JVM_ARGS
-            value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml -Xmx3g -XX:MaxMetaspaceSize=512m"
+            value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml -Xmx3g -XX:MaxMetaspaceSize=256m"
 ```
 
 ## Recovery

@@ -23,6 +23,7 @@ spec:
         - name: script-vol
           configMap:
             name: gridgain-recovery-script
+            defaultMode: 0777
     backoffLimit: 1
   pollingInterval: 30
   successfulJobsHistoryLimit: 2
@@ -40,7 +41,7 @@ spec:
       metadata:
         serverAddress: http://prometheus-server.keda.svc.cluster.local:80
         query: |
-          avg(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+          avg(jvm_memory_committed_bytes{area="heap", job="gridgain"} / jvm_memory_max_bytes{area="heap", job="gridgain"})
         threshold: "0.7"
     - type: prometheus
       name: nonheap-memory-usage

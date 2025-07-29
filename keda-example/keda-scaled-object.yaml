@@ -41,7 +41,7 @@ spec:
       metadata:
         serverAddress: http://prometheus-server.keda.svc.cluster.local:80
         query: |
-          sum(jvm_memory_committed_bytes{area="nonheap", job="gridgain"} / jvm_memory_max_bytes{area="nonheap", job="gridgain"})
+          sum(jvm_memory_committed_bytes{area="heap", job="gridgain"} / jvm_memory_max_bytes{area="heap", job="gridgain"})
         threshold: "0.7"
     - type: prometheus
       name: nonheap-memory-usage

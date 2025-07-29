@@ -57,7 +57,7 @@ spec:
             value: /gg9-work
           # Test for JMX
           - name: GRIDGAIN9_EXTRA_JVM_ARGS
-            value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml"
+            value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml -XX:MaxMetaspaceSize=256m"
         # GridGains Docker image and it's version.
         image: gridgain/gridgain9:9.1.1
         # image: docker.gridgain.com/docker-dev/gridgain/gridgain9@sha256:6ecee996640806a45ce4bee338061c9f2f2f3be3e562923a2498cba1cd1b184e
