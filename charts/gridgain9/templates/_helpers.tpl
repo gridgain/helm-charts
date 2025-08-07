@@ -80,3 +80,25 @@ Create the name of the service account to use
 {{- else -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Convert memory string to bytes
+*/}}
+{{- define "gridgain9.memoryToBytes" -}}
+{{- $memory := . -}}
+{{- if hasSuffix "Gi" $memory -}}
+{{- mul (atoi (trimSuffix "Gi" $memory)) 1073741824 -}}
+{{- else if hasSuffix "Mi" $memory -}}
+{{- mul (atoi (trimSuffix "Mi" $memory)) 1048576 -}}
+{{- else if hasSuffix "Ki" $memory -}}
+{{- mul (atoi (trimSuffix "Ki" $memory)) 1024 -}}
+{{- else if hasSuffix "G" $memory -}}
+{{- mul (atoi (trimSuffix "G" $memory)) 1000000000 -}}
+{{- else if hasSuffix "M" $memory -}}
+{{- mul (atoi (trimSuffix "M" $memory)) 1000000 -}}
+{{- else if hasSuffix "K" $memory -}}
+{{- mul (atoi (trimSuffix "K" $memory)) 1000 -}}
+{{- else -}}
+{{- atoi $memory -}}
+{{- end -}}
+{{- end -}}

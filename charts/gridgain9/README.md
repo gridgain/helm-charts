@@ -1,6 +1,6 @@
 # gridgain9
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 9.0.5](https://img.shields.io/badge/AppVersion-9.0.5-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 9.1.1](https://img.shields.io/badge/AppVersion-9.1.1-informational?style=flat-square)
 
 A Helm chart to deploy GridGain 9
 
@@ -13,6 +13,20 @@ A Helm chart to deploy GridGain 9
 ## Source Code
 
 * <https://github.com/gridgain/helm-charts/tree/main/charts>
+
+## TL;DR
+
+```console
+helm repo add gridgain https://gridgain.github.io/helm-charts/
+helm repo update 
+helm install my-release gridgain/gridgain9
+```
+
+## Prerequisites
+
+- Kubernetes 1.26+
+- Helm 3.11.3+
+- PV provisioner support in the persistence configuration
 
 ## Limitations and Considerations
 

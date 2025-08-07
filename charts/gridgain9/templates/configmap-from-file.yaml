@@ -21,7 +21,7 @@ metadata:
   annotations: {{- toYaml .Values.commonAnnotations | nindent 4 }}
   {{- end }}
 data:
-  {{ $value.filename }}: |-
+  {{ $value.filename }}: |
 {{- if $value.localpath }}
 {{ tpl ( .Files.Get ( printf "%s/%s" $value.localpath $value.filename ) ) . | indent 4 }}
 {{- else }}
