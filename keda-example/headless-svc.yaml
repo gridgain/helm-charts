@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gridgain-svc-headless
+  namespace: gridgain
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: management
+    port: 10300
+    protocol: TCP
+    targetPort: 10300
+  - name: rest
+    port: 10800
+    protocol: TCP
+    targetPort: 10800
+  - name: cluster
+    port: 3344
+    protocol: TCP
+    targetPort: 3344
+  - name: metrics
+    port: 9404
+    targetPort: 9404
+  selector:
+    app: gridgain
+  publishNotReadyAddresses: True
+  sessionAffinity: None
+  type: ClusterIP
+    
