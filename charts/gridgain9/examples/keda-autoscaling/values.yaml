@@ -1,0 +1,75 @@
+# Example values for GridGain9 with KEDA autoscaling and JMX metrics
+# This example shows how to configure GridGain9 with KEDA-based autoscaling
+# and Prometheus metrics scraping using ServiceMonitor
+
+# Enable JMX metrics exposure
+jmx:
+  enabled: true
+  port: 9404
+  agent:
+    image: "busybox:1.36"
+    pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+  config: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 4Gi
+  requests:
+    cpu: "1"
+    memory: 4Gi
+
+extraEnvVars:
+  - name: GRIDGAIN9_EXTRA_JVM_ARGS
+    value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml -Xms1g -Xmx3g -XX:MaxMetaspaceSize=256m"
+
+# ServiceMonitor configuration for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics
+  port: metrics
+  labels:
+    release: prometheus
+
+# KEDA ScaledObject configuration
+keda:
+  enabled: true
+  pollingInterval: 30
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+    - type: prometheus
+      name: heap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          avg(jvm_memory_committed_bytes{area="heap", job="gridgain-gridgain9-headless"} / jvm_memory_max_bytes{area="heap", job="gridgain-gridgain9-headless"})
+        threshold: "0.5"
+    - type: prometheus
+      name: nonheap-memory-usage
+      metadata:
+        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          avg(jvm_memory_committed_bytes{area="nonheap", job="gridgain-gridgain9-headless"} / jvm_memory_max_bytes{area="nonheap", job="gridgain-gridgain9-headless"})
+        threshold: "0.7"
+
+# License configuration (example)
+license:
+  mountPath: /opt/gridgain/etc/license.conf
+  createSecret: 
+    mountPath: /opt/gridgain/etc
+    content: |
+      {"edition":"ULTIMATE"...}
+

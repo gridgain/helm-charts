@@ -48,5 +48,11 @@ spec:
     protocol: TCP
     targetPort: {{ required "Target port is not provided!" $port }}
   {{- end }}
+  {{- if $.Values.jmx.enabled }}
+  - name: metrics
+    port: {{ $.Values.jmx.port }}
+    protocol: TCP
+    targetPort: {{ $.Values.jmx.port }}
+  {{- end }}
   selector: {{- include "gridgain9.selectorLabels" $ | nindent 4 }}
 {{- end }}
