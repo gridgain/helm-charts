@@ -1,0 +1,21 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "gridgain9.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gridgain9.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "gridgain9.fullname" . }}
+    kind: StatefulSet
+  pollingInterval: {{ .Values.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.keda.cooldownPeriod }}
+  minReplicaCount: {{ .Values.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.keda.maxReplicaCount }}
+  {{- if .Values.keda.triggers }}
+  triggers:
+    {{- toYaml .Values.keda.triggers | nindent 4 }}
+  {{- end }}
+{{- end }} 

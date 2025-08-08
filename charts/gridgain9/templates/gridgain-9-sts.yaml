@@ -14,7 +14,9 @@ metadata:
   labels:
     {{- include "gridgain9.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.keda.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   serviceName: {{ include "gridgain9.fullname" . }}-headless
   selector:
     matchLabels:
@@ -84,6 +86,15 @@ spec:
           # GridGain 9 working directory.
           - name: GRIDGAIN_WORK_DIR
             value: {{ .Values.gridgainWorkDir | default "/persistence/db" }}
+          {{- if .Values.extraEnvVars }}
+          {{- toYaml .Values.extraEnvVars | nindent 10 }}
+          {{- end }}
+          {{- if .Values.extraEnvVarsCM }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) | nindent 10 }}
+          {{- end }}
+          {{- if .Values.extraEnvVarsSecret }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) | nindent 10 }}
+          {{- end }}
         # GridGains Docker image and it's version.
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         ports: {{- toYaml .Values.containerPorts | nindent 8 }}
@@ -122,6 +133,15 @@ spec:
         - name: {{ .Values.existingConfigmap.name }}
           mountPath: {{ .Values.existingConfigmap.path }}
         {{- end }}
+        {{- if .Values.jmx.enabled }}
+        # JMX agent volume mount
+        - name: jmx-agent
+          mountPath: /agent
+        # JMX configuration volume mount
+        - name: jmx-config
+          mountPath: /opt/jmx/jmx.yaml
+          subPath: jmx.yaml
+        {{- end }}
       {{- $root := .Values }}
       {{- range .Values.sidecars }}
       {{- if .enabled }}
@@ -155,7 +175,7 @@ spec:
       {{- if .Values.podSecurityContext }}
       securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- end }}
-      {{- if (or .Values.persistence.volumePermissions.enabled .Values.initContainers) }}
+      {{- if (or .Values.persistence.volumePermissions.enabled .Values.initContainers .Values.jmx.enabled) }}
       initContainers:
       {{- if .Values.persistence.volumePermissions.enabled }}
       {{- $root := .Values -}}
@@ -185,6 +205,23 @@ spec:
       {{- end }}
       {{- if .Values.initContainers }}
       {{- include "common.tplvalues.render" ( dict "value" .Values.initContainers "context" $ ) | nindent 6 }}
+      {{- end }}
+      {{- if .Values.jmx.enabled }}
+      # JMX agent init container - using JMX exporter
+      - name: jmx-agent-init
+        image: {{ .Values.jmx.agent.image }}
+        imagePullPolicy: {{ .Values.jmx.agent.pullPolicy }}
+        resources:
+          {{- toYaml .Values.jmx.agent.resources | nindent 10 }}
+        command:
+          - /bin/sh
+          - -c
+          - |
+            wget -q -O /agent/jmx.jar \
+              https://github.com/prometheus/jmx_exporter/releases/download/1.3.0/jmx_prometheus_javaagent-1.3.0.jar
+        volumeMounts:
+        - name: jmx-agent
+          mountPath: /agent
       {{- end }}
       {{- end }}
       restartPolicy: Always
@@ -232,6 +269,15 @@ spec:
       - name: {{ .Values.existingConfigmap.name }}
         configMap:
           name: {{ .Values.existingConfigmap.name }}
+      {{- end }}
+      {{- if .Values.jmx.enabled }}
+      # JMX agent volume
+      - name: jmx-agent
+        emptyDir: {}
+      # JMX configuration volume
+      - name: jmx-config
+        configMap:
+          name: {{ include "gridgain9.fullname" . }}-jmx
       {{- end }}
   volumeClaimTemplates:
   {{- range $key, $value := .Values.persistence.volumes }}

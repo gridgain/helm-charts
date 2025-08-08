@@ -113,6 +113,41 @@ extraEnvVars: []
 #   - name: FOO
 #     value: "bar"
 
+# -- JMX configuration for metrics exposure
+jmx:
+  # -- Enable JMX metrics exposure
+  enabled: false
+  # -- JMX port for metrics
+  port: 9404
+  # -- JMX agent configuration
+  agent:
+    # -- JMX agent image
+    image: "busybox:1.36"
+    # -- JMX agent image pull policy
+    pullPolicy: IfNotPresent
+    # -- JMX agent resources
+    resources:
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+  # -- JMX configuration file content
+  config: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+
+  # rules:
+  #   - pattern: '^java.lang<type=OperatingSystem><>SystemLoadAverage'
+  #     name: os_system_load_average
+  #     help: "System load average for the last minute (from OperatingSystemMXBean)"
+  #     type: GAUGE
+  #   - pattern: '^org.apache.metrics<type=jvm><>memory.heap.used'
+  #     name: jvm_memory_usage
+  #     type: GAUGE
+  #     attrNameSnakeCase: true
+
 # -- Name of existing ConfigMap containing extra env vars for GridGain  nodes
 extraEnvVarsCM: ""
 # -- Name of existing Secret containing extra env vars for GridGain  nodes
@@ -284,6 +319,9 @@ containerPorts:
   # default cluster port
   - containerPort: 3344
     protocol: TCP
+  # JMX metrics port (only added when jmx.enabled is true)
+  - containerPort: 9404
+    protocol: TCP
 
 # -- Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP. 
 # @default -- check default services configuration in values.yaml
@@ -424,6 +462,70 @@ networkPolicy: {}
 #       podSelector:
 #         matchLabels:
 #           k8s-app: kube-dns
+
+# -- ServiceMonitor configuration for Prometheus metrics scraping
+serviceMonitor:
+  # -- Enable ServiceMonitor for Prometheus
+  enabled: false
+  # -- ServiceMonitor interval
+  interval: 30s
+  # -- ServiceMonitor scrape timeout
+  scrapeTimeout: 10s
+  # -- ServiceMonitor path
+  path: /metrics
+  # -- ServiceMonitor port
+  port: metrics
+  # -- ServiceMonitor labels
+  labels: {}
+  # -- ServiceMonitor annotations
+  annotations: {}
+  # -- ServiceMonitor namespace
+  namespace: ""
+  # -- ServiceMonitor namespaceSelector
+  namespaceSelector: {}
+  # -- ServiceMonitor selector
+  selector: {}
+  # -- ServiceMonitor endpoints
+  endpoints: []
+  # -- ServiceMonitor jobLabel
+  jobLabel: ""
+  # -- ServiceMonitor targetLabels
+  targetLabels: []
+  # -- ServiceMonitor podTargetLabels
+  podTargetLabels: []
+  # -- ServiceMonitor sampleLimit
+  sampleLimit: 0
+  # -- ServiceMonitor targetLimit
+  targetLimit: 0
+  # -- ServiceMonitor labelLimit
+  labelLimit: 0
+  # -- ServiceMonitor labelNameLengthLimit
+  labelNameLengthLimit: 0
+  # -- ServiceMonitor labelValueLengthLimit
+  labelValueLengthLimit: 0
+
+# -- KEDA ScaledObject configuration for autoscaling
+keda:
+  # -- Enable KEDA ScaledObject
+  enabled: false
+  # -- KEDA ScaledObject polling interval
+  pollingInterval: 30
+  # -- KEDA ScaledObject cooldown period
+  cooldownPeriod: 300
+  # -- KEDA ScaledObject min replica count
+  minReplicaCount: 1
+  # -- KEDA ScaledObject max replica count
+  maxReplicaCount: 10
+  # -- KEDA ScaledObject triggers
+  triggers: []
+  # keda:
+  #   triggers:
+  #     - type: prometheus
+  #       metadata:
+  #         serverAddress: http://prometheus-server.monitoring.svc.cluster.local:9090
+  #         metricName: gridgain_cluster_size
+  #         query: gridgain_cluster_size
+  #         threshold: "3"
 
 # -- Array of extra objects to deploy with the release (evaluated as a template)
 extraDeploy: []
