@@ -2,14 +2,6 @@
 
 This example demonstrates how to deploy GridGain9 with KEDA-based autoscaling and Prometheus metrics scraping.
 
-## Prerequisites
-
-- A running Kubernetes cluster (v1.21 or newer)
-- `kubectl` installed and configured
-- Helm v3 installed
-- KEDA installed in your cluster
-- Prometheus Operator installed (for ServiceMonitor support)
-
 ## Installation
 
 1. **Add Helm repositories:**
