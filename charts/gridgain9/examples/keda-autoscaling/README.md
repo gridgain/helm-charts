@@ -26,6 +26,14 @@ This example demonstrates how to deploy GridGain9 with KEDA-based autoscaling an
    helm install gridgain9 ./charts/gridgain9 -f examples/keda-autoscaling/values.yaml --namespace gridgain --create-namespace
    ```
 
+## Important: Memory Configuration for Autoscaling
+
+For KEDA autoscaling to function correctly based on JVM metrics, you **must** define the maximum heap and non-heap (Metaspace) memory for the GridGain Java process. If these are not set, threshold values will be calculated incorrectly.
+
+You can set these limits by modifying the `values.yaml` file and `extraEnvVars` parameter. Add the environment variable `GRIDGAIN9_EXTRA_JVM_ARGS` and define `-Xmx` (max heap size) and `-XX:MaxMetaspaceSize` (max non-heap/metaspace size) flags.
+
+The total memory for these flags should be less than the container's memory limit (e.g., `memory: 4Gi` in the limits).
+
 ## Customization
 
 ### Adding Custom Metrics
