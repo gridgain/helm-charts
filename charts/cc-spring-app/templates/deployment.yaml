@@ -15,8 +15,11 @@ spec:
   template:
     metadata:
       labels: {{- include "cc-spring-app.podLabels" . | nindent 8 }}
+      annotations: 
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/configs: {{ include (print $.Template.BasePath "/configmaps.yaml") . | sha256sum }}
       {{- if .Values.podAnnotations }}
-      annotations: {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
     spec:
       {{- if .Values.imagePullSecrets }}
