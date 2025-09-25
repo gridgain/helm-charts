@@ -92,8 +92,8 @@ When running GridGain 9 in a Kubernetes environment, the node configuration beco
 | persistence.volumePermissions.enabled | bool | `false` | Enable init container that changes the owner and group of the persistent volume |
 | persistence.volumePermissions.image.pullPolicy | string | `"IfNotPresent"` | Init container volume-permissions image pull policy |
 | persistence.volumePermissions.image.registry | string | `"docker.io"` | Init container volume-permissions image registry |
-| persistence.volumePermissions.image.repository | string | `"bitnami/os-shell"` | Init container volume-permissions image repository |
-| persistence.volumePermissions.image.tag | string | `"12-debian-12-r21"` | Init container volume-permissions image tag (immutable tags are recommended) |
+| persistence.volumePermissions.image.repository | string | `"debian"` | Init container volume-permissions image repository |
+| persistence.volumePermissions.image.tag | string | `"12.12-slim"` | Init container volume-permissions image tag (immutable tags are recommended) |
 | persistence.volumePermissions.resources | object | `{}` | Init container resource [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) |
 | persistence.volumes.persistence.accessModes | list | `["ReadWriteOnce"]` | PVC Access Mode for GridGain volume |
 | persistence.volumes.persistence.annotations | object | `{}` | Annotations for the PVC |

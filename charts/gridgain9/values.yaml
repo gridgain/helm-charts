@@ -372,9 +372,9 @@ persistence:
       # -- Init container volume-permissions image registry
       registry: docker.io
       # -- Init container volume-permissions image repository
-      repository: bitnami/os-shell
+      repository: debian
       # -- Init container volume-permissions image tag (immutable tags are recommended)
-      tag: 12-debian-12-r21
+      tag: 12.12-slim
       # -- Init container volume-permissions image pull policy
       pullPolicy: IfNotPresent
     # -- Init container resource [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)
