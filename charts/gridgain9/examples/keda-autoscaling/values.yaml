@@ -2,6 +2,9 @@
 # This example shows how to configure GridGain9 with KEDA-based autoscaling
 # and Prometheus metrics scraping using ServiceMonitor
 
+# Initial number of replicas
+replicaCount: 1
+
 # Enable JMX metrics exposure
 jmx:
   enabled: true
@@ -56,7 +59,7 @@ keda:
         serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
         query: |
           avg(jvm_memory_committed_bytes{area="heap", job="gridgain-gridgain9-headless"} / jvm_memory_max_bytes{area="heap", job="gridgain-gridgain9-headless"})
-        threshold: "0.5"
+        threshold: "0.4"
     - type: prometheus
       name: nonheap-memory-usage
       metadata:

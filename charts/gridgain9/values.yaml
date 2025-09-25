@@ -60,6 +60,23 @@ license: {}
 #     mountPath: /opt/gridgain/etc/license9.conf
 # # -- License raw content
 #     content: |
+#       copy-paste-license-here
+# -- Existing secret with license to be mounted
+#   useExisting:
+# # -- Name of the secret
+#     secretname: somesecret
+# # -- Key in the secret
+#     secretkey: license9.conf
+
+clusterConfig:
+# -- path inside GridGain init container to mount the file with cluster config
+  mountPath: /etc/gridgain9db/cluster.conf
+# -- Create secret from raw content passed
+  createSecret: 
+    mountPath: /etc/gridgain9db/cluster.conf
+# -- Cluster config raw content
+    content: |
+      {}
 #       ignite {
 # # Authentication and Authorization https://www.gridgain.com/docs/gridgain9/latest/administrators-guide/security/authentication
 # # -- Basic Authentication
@@ -78,15 +95,17 @@ license: {}
 #             ]
 #           }]
 #         }
-#         license{content:""}
 #       }
-
-# # -- Existing secret with license to be mounted
+# -- Create secret with cluster config from file inside chart folder
+#   fromFile:
+# # -- Relative path to file inside chart folder 
+#     filepath: files/configmaps/cluster.json
+# -- Existing secret with cluster config to be mounted
 #   useExisting:
 # # -- Name of the secret
 #     secretname: somesecret
 # # -- Key in the secret
-#     secretkey: license9.conf
+#     secretkey: cluster.conf
 
 # -- Number of GridGain cluster replicas
 replicaCount: 3

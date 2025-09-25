@@ -110,7 +110,7 @@ spec:
           echo "CMG size: $CMG_SIZE"
           echo "CMG nodes: $CMG_NODES"
           
-          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --cluster-management-group $CMG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license=/opt/gridgain/etc/license.conf
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --cluster-management-group $CMG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license={{ .Values.license.mountPath }} --config-files={{ .Values.clusterConfig.mountPath }}
         command:
         - /bin/bash
         # Specify the Docker image with the GridGain 9 CLI and its version.
@@ -134,6 +134,17 @@ spec:
           subPath: license.conf
           readOnly: true
         {{- end }}
+        {{- if .Values.clusterConfig.useExisting }}
+        - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
+          mountPath: {{ .Values.clusterConfig.mountPath }}
+          subPath: {{ .Values.clusterConfig.useExisting.secretkey }}
+          readOnly: true
+        {{- else if or .Values.clusterConfig.createSecret .Values.clusterConfig.fromFile  }}
+        - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
+          mountPath: {{ .Values.clusterConfig.mountPath }}
+          subPath: cluster.json
+          readOnly: true
+        {{- end }}
       restartPolicy: Never
       terminationGracePeriodSeconds: 120
       volumes:
@@ -145,4 +156,13 @@ spec:
       - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
         secret:
           secretName: {{ printf "%s-%s" (include "gridgain9.fullname" .) "license" }}
+      {{- end }}
+      {{- if .Values.clusterConfig.useExisting }}
+      - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
+        secret:
+          secretName: {{ .Values.clusterConfig.useExisting.secretname }}
+      {{- else if or .Values.clusterConfig.createSecret .Values.clusterConfig.fromFile }}
+      - name: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
+        secret:
+          secretName: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
       {{- end }}
