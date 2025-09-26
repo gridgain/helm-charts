@@ -6,6 +6,16 @@ license:
     mountPath: /opt/gridgain/etc
 # -- License raw content
     content: |
+      {"edition":"ULTIMATE"...}
+
+clusterConfig:
+# -- path inside GridGain init container to mount the file with cluster config
+  mountPath: /etc/gridgain9db/cluster.conf
+# -- Create secret from raw content passed
+  createSecret: 
+    mountPath: /etc/gridgain9db/cluster.conf
+# -- Cluster config raw content
+    content: |
       ignite {
         security {
           enabled:true,
@@ -21,8 +31,5 @@ license:
               }
             ]
           }]
-        }
-        license {
-          content:"<Put your license here>"
         }
       }

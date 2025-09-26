@@ -6,11 +6,7 @@ license:
     mountPath: /opt/gridgain/etc
 # -- License raw content
     content: |
-      ignite {
-        license {
-          content:"<Put your license here>"
-        }
-      }
+      {"edition":"ULTIMATE"...}
 
 persistence:
   volumes:
