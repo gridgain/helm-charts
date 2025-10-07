@@ -58,7 +58,7 @@ Older version of Kubernetes and Helm were not tested so use it at your peril.
 | ingress.tls | list | `[{"hosts":["connector.example.io"],"secretName":"connector.example.io-tls"}]` | Ingress TLS configuration secrets, secret must be manually created in the namespace |
 | labels | object | `{}` | Map of labels |
 | livenessProbe | object | Use default values.yaml to check defaults | Configures (liveness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
-| livenessProbe.httpGet | object | `{"path":"/actuator/health","port":"http"}` | Path and port for probe |
+| livenessProbe.httpGet | object | `{"path":"/actuator/health/liveness","port":"http"}` | Path and port for probe |
 | livenessProbe.initialDelaySeconds | int | `300` | Initial delay seconds for livenessProbe |
 | livenessProbe.periodSeconds | int | `10` | Period seconds for livenessProbe |
 | nameOverride | string | `""` | String to partially override common.names.fullname template (will maintain the release name) |
@@ -71,7 +71,7 @@ Older version of Kubernetes and Helm were not tested so use it at your peril.
 | rbac.create | bool | `true` | Creates default Role and RoleBinding |
 | rbac.rules | list | `[{"apiGroups":[""],"resources":["services","pods","endpoints","configmaps"],"verbs":["get","list"]}]` | Custom RBAC rules to be added |
 | readinessProbe | object | Use default values.yaml to check defaults | Configures (readiness probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for Control Center Spring application container |
-| readinessProbe.httpGet | object | `{"path":"/actuator/health","port":"http"}` | Path and port for probe |
+| readinessProbe.httpGet | object | `{"path":"/actuator/health/readiness","port":"http"}` | Path and port for probe |
 | readinessProbe.initialDelaySeconds | int | `60` | Initial delay seconds for livenessProbe |
 | readinessProbe.periodSeconds | int | `10` | Period seconds for livenessProbe |
 | replicaCount | int | `1` | Number of Control Center Spring application replicas |

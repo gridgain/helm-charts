@@ -104,7 +104,7 @@ resources:
 livenessProbe:
   # -- Path and port for probe
   httpGet:
-    path: /actuator/health
+    path: /actuator/health/liveness
     port: http
   # -- Initial delay seconds for livenessProbe
   initialDelaySeconds: 300
@@ -116,7 +116,7 @@ livenessProbe:
 readinessProbe:
   # -- Path and port for probe
   httpGet:
-    path: /actuator/health
+    path: /actuator/health/readiness
     port: http
   # -- Initial delay seconds for livenessProbe
   initialDelaySeconds: 60
