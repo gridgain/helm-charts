@@ -56,6 +56,9 @@ spec:
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml .Values.imagePullSecrets | nindent 6 }}
+      {{- end }}
       containers:
       - name: gridgaindb
         command:
@@ -96,7 +99,7 @@ spec:
           {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) | nindent 10 }}
           {{- end }}
         # GridGains Docker image and it's version.
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         ports: {{- toYaml .Values.containerPorts | nindent 8 }}
         volumeMounts:
         {{- if .Values.license.useExisting }}

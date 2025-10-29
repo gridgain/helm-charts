@@ -36,6 +36,9 @@ spec:
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml .Values.imagePullSecrets | nindent 6 }}
+      {{- end }}
       containers:
       # Command to init the cluster. URL and host must be the name of the service you created before. Port is 10300 as the management port.
       - args:
@@ -114,7 +117,7 @@ spec:
         command:
         - /bin/bash
         # Specify the Docker image with the GridGain 9 CLI and its version.
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: IfNotPresent
         name: cluster-init
         resources:

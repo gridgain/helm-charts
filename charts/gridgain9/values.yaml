@@ -28,6 +28,9 @@ image:
   # -- Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   pullPolicy: IfNotPresent
 
+# -- Name of the secret to pull a docker image from [private registry](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)
+imagePullSecrets: []
+
 # -- Optionally specify GridGain statefulset [podManagementPolicy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies)
 podManagementPolicy: OrderedReady
 # -- The maximum number of revisions that will be maintained in the StatefulSet's [revision history](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit)
