@@ -1,0 +1,211 @@
+# GridGain 9 Benchmark Configuration
+# This values file contains only overrides from default values.yaml
+# Use with: helm upgrade --install gridgain9-complete gridgain/gridgain9 -f values.yaml
+
+image:
+  registry: docker.io
+  repository: gridgain/gridgain9
+  tag: 9.1.15
+  pullPolicy: IfNotPresent
+
+# Resource configuration for benchmark
+# 16 GiB RAM and 8 CPU with Guaranteed QoS (requests = limits)
+resources:  
+  limits:
+    cpu: "8"
+    memory: 16Gi
+  requests:
+    cpu: "8"
+    memory: 16Gi
+
+# JVM Configuration
+# GRIDGAIN9_EXTRA_JVM_ARGS with fixed heap size: 10GB heap (Xms10g -Xmx10g)
+# Includes JMX agent for metrics, G1GC, and heap dump configuration
+# MaxMetaspaceSize: 256m, ReservedCodeCacheSize: 256m
+# Using -XX:InitialRAMPercentage and -XX:MaxRAMPercentage is not recommended for kubernetes workloads
+extraEnvVars:
+  - name: GRIDGAIN9_EXTRA_JVM_ARGS
+    value: "-javaagent:/agent/jmx.jar=9404:/opt/jmx/jmx.yaml -XX:+UseContainerSupport -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs -Xms10g -Xmx10g -XX:+AlwaysPreTouch"
+  - name: JVM_G1HeapRegionSize
+    value: "32M"
+  - name: JVM_GC_LOG_NAME
+    value: "gc.log.$(date -u +%Y%m%d_%H%M%S)"
+  - name: JVM_GC_LOG_SIZE
+    value: "100m"
+  - name: JVM_GC_NUM_LOGS
+    value: "10"
+
+# Storage configuration
+# Three volumes: raft (250GB), persistence (1TB), logs (250GB)
+# Override default persistence volume and add raft and logs volumes
+persistence:
+  volumes:
+    # Raft logs volume - 250GB
+    raft:
+      enabled: true
+      mountPath: /raft
+      size: 250Gi
+      storageClassName: "premium-rwo"  # Change to your storage class
+      accessModes:
+        - ReadWriteOnce
+    # Persistence volume - 1TB (override default 8Gi)
+    persistence:
+      enabled: true
+      mountPath: /persistence
+      size: 1Ti
+      storageClassName: "premium-rwo"  # Change to your storage class
+      accessModes:
+        - ReadWriteOnce
+    # Logs volume - 250GB
+    logs:
+      enabled: true
+      mountPath: /logs
+      size: 250Gi
+      storageClassName: "premium-rwo"  # Change to your storage class
+      accessModes:
+        - ReadWriteOnce
+
+# GridGain main configuration
+# Override default configMapsFromFile to provide custom config
+configMapsFromFile:
+  gridgain-config: null
+
+configMaps:
+  gridgain-config:
+    name: gridgain-config.conf
+    path: /opt/gridgain/etc/gridgain-config.conf
+    subpath: gridgain-config.conf
+    # Template syntax is processed by Helm - use {{ }} for dynamic values
+    content: |
+      ignite {
+        network {
+          nodeFinder: {
+            netClusterNodes: [
+              "{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.cluster }}"
+            ]
+          }
+        }
+        system {
+          partitionsLogPath="/raft"
+          partitionsBasePath="/persistence"
+        }
+        storage {
+          profiles=[
+            {
+              engine=aipersist
+              name=default
+              size=1073741824  # 1GB storage profile size
+            }
+          ]
+        }
+      }
+
+license:
+  mountPath: /opt/gridgain/etc/license.conf
+  createSecret: 
+    mountPath: /opt/gridgain/etc
+    content: |
+      {"edition":"ULTIMATE",...}
+
+# JMX configuration for metrics exposure
+jmx:
+  enabled: true
+
+# Service configuration
+# Add NodePort services for external access (in addition to default headless service)
+services:
+  # NodePort service for REST API access
+  rest:
+    type: NodePort
+    ports:
+      rest: 10800
+      management: 10300
+    sessionAffinity: None
+  # NodePort service for cluster communication
+  cluster:
+    type: NodePort
+    ports:
+      cluster: 3344
+    sessionAffinity: None
+
+# Init containers for sysctls and performance tuning
+# Runs as privileged root container to modify kernel parameters
+initContainers:
+  - name: sysctl-setup
+    image: busybox:1.36
+    command: ['sh', '-c']
+    args:
+      - |
+        # Configure transparent hugepages (disabled)
+        echo "Configuring transparent hugepages"
+        echo never > /sys/kernel/mm/transparent_hugepage/enabled
+        echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+        # Configure sysctls for performance tuning
+        # Note: Requires privileged container with SYS_ADMIN and SYS_RESOURCE capabilities
+        echo "Configuring sysctls for performance tuning"
+        sysctl -w vm.swappiness=0 || echo "Warning: Cannot set vm.swappiness"
+        sysctl -w vm.dirty_background_ratio=1 || echo "Warning: Cannot set vm.dirty_background_ratio"
+        sysctl -w vm.dirty_ratio=20 || echo "Warning: Cannot set vm.dirty_ratio"
+        sysctl -w vm.dirty_expire_centisecs=500 || echo "Warning: Cannot set vm.dirty_expire_centisecs"
+        sysctl -w vm.dirty_writeback_centisecs=500 || echo "Warning: Cannot set vm.dirty_writeback_centisecs"
+        sysctl -w vm.overcommit_memory=2 || echo "Warning: Cannot set vm.overcommit_memory"
+        sysctl -w vm.overcommit_ratio=100 || echo "Warning: Cannot set vm.overcommit_ratio"
+        sysctl -w vm.zone_reclaim_mode=0 || echo "Warning: Cannot set vm.zone_reclaim_mode"
+        sysctl -w vm.extra_free_kbytes=1240000 || echo "Warning: Cannot set vm.extra_free_kbytes"
+        sysctl -w net.core.somaxconn=4096 || echo "Warning: Cannot set net.core.somaxconn"
+        sysctl -w net.ipv4.tcp_max_syn_backlog=4096 || echo "Warning: Cannot set net.ipv4.tcp_max_syn_backlog"
+        sysctl -w net.core.netdev_max_backlog=5000 || echo "Warning: Cannot set net.core.netdev_max_backlog"
+        sysctl -w net.ipv4.tcp_syncookies=1 || echo "Warning: Cannot set net.ipv4.tcp_syncookies"
+        sysctl -w net.ipv4.tcp_tw_reuse=1 || echo "Warning: Cannot set net.ipv4.tcp_tw_reuse"
+        sysctl -w net.core.rmem_max=16777216 || echo "Warning: Cannot set net.core.rmem_max"
+        sysctl -w net.core.wmem_max=16777216 || echo "Warning: Cannot set net.core.wmem_max"
+        sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216" || echo "Warning: Cannot set net.ipv4.tcp_rmem"
+        sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216" || echo "Warning: Cannot set net.ipv4.tcp_wmem"
+        sysctl -w kernel.panic=3 || echo "Warning: Cannot set kernel.panic"
+    securityContext:
+      privileged: true
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      capabilities:
+        add:
+          - SYS_ADMIN
+          - SYS_RESOURCE
+    resources:
+      limits:
+        cpu: "100m"
+        memory: "64Mi"
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+
+# Termination grace period (increased from default 30s)
+terminationGracePeriodSeconds: 60
+
+# Liveness and readiness probes (adjusted delays for JVM startup)
+livenessProbe:
+  initialDelaySeconds: 60
+
+readinessProbe:
+  initialDelaySeconds: 90
+
+# Startup probe (enabled, default is disabled)
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /management/v1/node/state
+    port: 10300
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 30
+  successThreshold: 1
+
+# Service account (enabled, default is disabled)
+serviceAccount:
+  create: true
