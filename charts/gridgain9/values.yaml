@@ -153,8 +153,8 @@ jmx:
         cpu: "100m"
         memory: "128Mi"
       requests:
-        cpu: "50m"
-        memory: "64Mi"
+        cpu: "100m"
+        memory: "128Mi"
   # -- JMX configuration file content
   config: |
     lowercaseOutputName: true
@@ -381,7 +381,13 @@ persistence:
       # -- Init container volume-permissions image pull policy
       pullPolicy: IfNotPresent
     # -- Init container resource [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)
-    resources: {}
+    resources:
+      limits:
+        cpu: "50m"
+        memory: "64Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
 
     # -- Init container [Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
     # Note: the chown of the data folder is done to containerSecurityContext.runAsUser
