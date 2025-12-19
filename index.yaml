@@ -177,6 +177,21 @@ entries:
   gridgain9:
   - apiVersion: v2
     appVersion: 9.1.15
+    created: "2025-12-19T11:39:51.028096998Z"
+    description: A Helm chart to deploy GridGain 9
+    digest: 0604178ab127ee2cb8665e28b0ade3269686c89ab977e850def2862d65ee2ce5
+    maintainers:
+    - name: GridGain Systems, Inc. All Rights Reserved
+      url: https://www.gridgain.com/
+    name: gridgain9
+    sources:
+    - https://github.com/gridgain/helm-charts/tree/main/charts
+    type: application
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.1.3/gridgain9-1.1.3.tgz
+    version: 1.1.3
+  - apiVersion: v2
+    appVersion: 9.1.15
     created: "2025-12-18T14:22:56.838789507Z"
     description: A Helm chart to deploy GridGain 9
     digest: b01cbd3ca51caa79997ebd851c2268be85da4055489c95206602fce91a6477b1
@@ -280,4 +295,4 @@ entries:
     urls:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.0.0/gridgain9-1.0.0.tgz
     version: 1.0.0
-generated: "2025-12-18T14:22:56.838835708Z"
+generated: "2025-12-19T11:39:51.028154525Z"
