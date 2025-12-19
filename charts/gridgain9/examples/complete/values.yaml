@@ -1,6 +1,6 @@
 # GridGain 9 Benchmark Configuration
 # This values file contains only overrides from default values.yaml
-# Use with: helm upgrade --install gridgain9-complete gridgain/gridgain9 -f values.yaml
+# Use with: helm upgrade --install gridgain9-complete gridgain/gridgain9 -f values.yaml --timeout 10m
 
 image:
   registry: docker.io
