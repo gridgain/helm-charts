@@ -41,6 +41,41 @@ extraEnvVars:
     value: "-Xms10g -Xmx10g ..."
 ```
 
+### Adjusting Resources and JVM Parameters
+
+Update the `resources` configuration according to your workload requirements, then adjust the `-Xmx` and `-Xms` parameters accordingly.
+
+**Step-by-step process:**
+
+1. **Set your resource limits and requests** in `values.yaml`:
+   ```yaml
+   resources:
+     limits:
+       cpu: "8"
+       memory: 16Gi
+     requests:
+       cpu: "8"
+       memory: 16Gi
+   ```
+
+2. **Calculate appropriate heap sizes** based on the memory limit:
+   - `-Xmx`: 50-60% of memory limit
+   - `-Xms`: 30-60% of memory limit (or equal to `-Xmx` for production)
+
+3. **Update the JVM parameters** in `extraEnvVars`:
+   ```yaml
+   extraEnvVars:
+     - name: GRIDGAIN9_EXTRA_JVM_ARGS
+       value: "-Xms8g -Xmx8g ..."  # Adjust based on your memory limit
+   ```
+
+**Example calculations:**
+- Memory limit: 8Gi → `-Xmx`: 4-4.8Gi, `-Xms`: 2.4-4.8Gi
+- Memory limit: 16Gi → `-Xmx`: 8-9.6Gi, `-Xms`: 4.8-9.6Gi
+- Memory limit: 32Gi → `-Xmx`: 16-19.2Gi, `-Xms`: 9.6-19.2Gi
+
+**Important**: Always ensure that `-Xmx` does not exceed 60% of the container memory limit to leave sufficient memory for off-heap storage, metaspace, code cache, and OS overhead.
+
 ## License Configuration
 
 GridGain Enterprise Edition (EE) or Ultimate Edition (UE) requires a valid license. The license can be configured in three ways:
@@ -99,6 +134,38 @@ services:
       cluster: 3344
     sessionAffinity: None
 ```
+
+**Connecting to NodePort Services:**
+
+To connect to GridGain via NodePort, you need to find:
+
+1. **Node IP Address**: Get the external or internal IP of any Kubernetes node:
+   ```bash
+   kubectl get nodes -o wide
+   ```
+   Use the `EXTERNAL-IP` or `INTERNAL-IP` column value.
+
+2. **NodePort Port Number**: Get the assigned NodePort for your service:
+   ```bash
+   kubectl get svc <release-name>-gridgain9-rest -o jsonpath='{.spec.ports[?(@.name=="rest")].nodePort}'
+   kubectl get svc <release-name>-gridgain9-rest -o jsonpath='{.spec.ports[?(@.name=="management")].nodePort}'
+   kubectl get svc <release-name>-gridgain9-cluster -o jsonpath='{.spec.ports[?(@.name=="cluster")].nodePort}'
+   ```
+   Or view all services:
+   ```bash
+   kubectl get svc
+   ```
+   Look for services with type `NodePort` and note the port number in the `PORT(S)` column (format: `10800:3XXXXX/TCP` where `3XXXXX` is the NodePort).
+
+3. **Connection URL**: Use the format `<NODE_IP>:<NODEPORT>`
+   - REST API: `http://<NODE_IP>:<REST_NODEPORT>`
+   - Management API: `http://<NODE_IP>:<MANAGEMENT_NODEPORT>`
+   - Cluster communication: `<NODE_IP>:<CLUSTER_NODEPORT>`
+
+**Example:**
+If node IP is `192.168.1.100` and NodePort for REST is `30800`, connect to: `http://192.168.1.100:30800`
+
+**Note**: NodePort services are accessible from outside the cluster. You can use any node's IP address to connect.
 
 ### LoadBalancer Service
 
