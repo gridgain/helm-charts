@@ -1,0 +1,19 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+rules:
+  # - pattern: '^java.lang<type=OperatingSystem><>SystemLoadAverage'
+  #   name: os_system_load_average
+  #   help: "System load average for the last minute (from OperatingSystemMXBean)"
+  #   type: GAUGE
+  - pattern: '^java.lang<type=Memory><>(HeapMemoryUsage|NonHeapMemoryUsage)'
+    name: jvm_memory_usage
+    type: GAUGE
+    attrNameSnakeCase: true
+
+  - pattern: '^java.lang<type=MemoryPool,name=(.*)><>(Usage|PeakUsage|CollectionUsage)'
+    name: jvm_memory_pool_$2
+    labels:
+      pool: "$1"
+    type: GAUGE
+    attrNameSnakeCase: true
