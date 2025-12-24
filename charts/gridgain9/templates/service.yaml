@@ -41,6 +41,9 @@ spec:
   {{- if $value.sessionAffinity }}
   sessionAffinity: {{ $value.sessionAffinity }}
   {{- end }}
+  {{- if $value.publishNotReadyAddresses }}
+  publishNotReadyAddresses: {{ $value.publishNotReadyAddresses }}
+  {{- end }}
   ports:
   {{- range $name, $port := $value.ports }}
   - name: {{ $name }}
