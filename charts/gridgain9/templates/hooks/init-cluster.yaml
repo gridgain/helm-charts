@@ -23,6 +23,11 @@ metadata:
   {{- end }}
 spec:
   template:
+    metadata:
+      {{- if .Values.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
       {{- if .Values.affinity }}
       affinity: {{- toYaml .Values.affinity | nindent 8 }}
@@ -38,6 +43,9 @@ spec:
       {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets: {{- toYaml .Values.imagePullSecrets | nindent 6 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "gridgain9.serviceAccountName" . }}
       {{- end }}
       containers:
       # Command to init the cluster. URL and host must be the name of the service you created before. Port is 10300 as the management port.
