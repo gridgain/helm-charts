@@ -32,7 +32,7 @@ image:
 imagePullSecrets: []
 
 # -- Optionally specify GridGain statefulset [podManagementPolicy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies)
-# Default value is Parallel so the StatefulSet controller doesn't wait the pod to become ready in order to start new one.
+# -- Default value is Parallel so the StatefulSet controller doesn't wait the pod to become ready in order to start new one.
 podManagementPolicy: Parallel
 # -- The maximum number of revisions that will be maintained in the StatefulSet's [revision history](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit)
 revisionHistoryLimit: 10
