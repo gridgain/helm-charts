@@ -32,8 +32,7 @@ image:
 imagePullSecrets: []
 
 # -- Optionally specify GridGain statefulset [podManagementPolicy](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies)
-# -- Default value is Parallel so the StatefulSet controller doesn't wait the pod to become ready in order to start new one.
-podManagementPolicy: Parallel
+podManagementPolicy: OrderedReady
 # -- The maximum number of revisions that will be maintained in the StatefulSet's [revision history](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#revision-history-limit)
 revisionHistoryLimit: 10
 
@@ -189,7 +188,7 @@ livenessProbe:
   enabled: true
   # -- Path and port for probe
   httpGet:
-    path: /health/liveness
+    path: /management/v1/node/state
     port: 10300
   # -- Initial delay seconds for livenessProbe
   initialDelaySeconds: 5
@@ -209,7 +208,7 @@ readinessProbe:
   enabled: true
   # -- Path and port for probe
   httpGet:
-    path: /health/readiness
+    path: /management/v1/node/state
     port: 10300
   # -- Initial delay seconds for readinessProbe
   initialDelaySeconds: 30
@@ -357,10 +356,6 @@ services:
       rest: 10800
       cluster: 3344
     sessionAffinity: None
-# Set to true so that the StatefulSet's Headless Service propagates SRV DNS records for its Pods for node discovery.
-# (https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceSpec)
-    publishNotReadyAddresses: true
-
   # thin:
   #   type: LoadBalancer
   # -- Enable [client source IP preservation(https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip)
