@@ -16,12 +16,12 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   labels: {{- include "gridgain9.labels" $ | nindent 4 }}
   {{- if ( or $value.annotations $.Values.commonAnnotations ) }}
-  annotations: 
+  annotations:
     {{- if $value.annotations }}
-    {{- toYaml $value.annotations | indent 4 }}
+    {{- toYaml $value.annotations | nindent 4 }}
     {{- end }}
     {{- if $.Values.commonAnnotations }}
-    {{- toYaml $.Values.commonAnnotations | indent 4 }}
+    {{- toYaml $.Values.commonAnnotations | nindent 4 }}
     {{- end }}
   {{- end }}
 spec:
