@@ -86,6 +86,24 @@ entries:
   gridgain:
   - apiVersion: v2
     appVersion: 8.9.11
+    created: "2026-01-29T13:15:49.980007312Z"
+    description: GridGain is a Unified Real-Time Data Platform by the original creators
+      of Apache Ignite. It enables a simplified and optimized data architecture for
+      enterprises that require extreme speed, massive scale, and high availability
+      from their data ecosystem.
+    digest: 757c4a8d73e786cb895c0928ca6cb2a2c7743106a971b90e97ea6a2648cd9919
+    home: https://www.gridgain.com/
+    maintainers:
+    - name: GridGain Systems, Inc. All Rights Reserved
+      url: https://www.gridgain.com/
+    name: gridgain
+    sources:
+    - https://github.com/gridgain/helm-charts/tree/main/charts/gridgain
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/gridgain-1.0.5/gridgain-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
+    appVersion: 8.9.11
     created: "2025-09-18T16:14:28.283111294Z"
     description: GridGain is a Unified Real-Time Data Platform by the original creators
       of Apache Ignite. It enables a simplified and optimized data architecture for
@@ -175,6 +193,21 @@ entries:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain-1.0.0/gridgain-1.0.0.tgz
     version: 1.0.0
   gridgain9:
+  - apiVersion: v2
+    appVersion: 9.1.16
+    created: "2026-01-29T13:15:50.209800853Z"
+    description: A Helm chart to deploy GridGain 9
+    digest: 608dd75add29df40bf1d62e79807f874f97735109d991de58783dabc4b377361
+    maintainers:
+    - name: GridGain Systems, Inc. All Rights Reserved
+      url: https://www.gridgain.com/
+    name: gridgain9
+    sources:
+    - https://github.com/gridgain/helm-charts/tree/main/charts
+    type: application
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.1.8/gridgain9-1.1.8.tgz
+    version: 1.1.8
   - apiVersion: v2
     appVersion: 9.1.16
     created: "2026-01-15T09:29:47.457906432Z"
@@ -355,4 +388,4 @@ entries:
     urls:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.0.0/gridgain9-1.0.0.tgz
     version: 1.0.0
-generated: "2026-01-15T09:29:47.457977003Z"
+generated: "2026-01-29T13:15:50.209940895Z"
