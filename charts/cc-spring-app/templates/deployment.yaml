@@ -32,10 +32,6 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: [ '/bin/bash' ]
-          args:
-          - '-c'
-          - './entry.sh'
           env:
           {{- if .Values.spring.trustKubernetesCertificates }}
           - name: KUBERNETES_TRUST_CERTIFICATES
