@@ -6,7 +6,10 @@ serviceAccount:
 rbac:
   create: false
 
-# Extra JVM_OPTS required to run Cloud Connector
+image:
+  repository: gridgain/cloud-connector
+  tag: 2025.5.1
+
 extraEnv:
   - name: JVM_OPTS
     value: >-
@@ -23,6 +26,8 @@ extraEnv:
       fieldRef:
         apiVersion: v1
         fieldPath: status.podIP
+
+containerPort: 3200
 
 # Security context to run Cloud Connector defined here
 securityContext:
@@ -41,7 +46,7 @@ resources:
 # By default Cloud Connector will be exposed to k8s network using ClusterIP service and 80 port
 service:
   enabled: true
-  httpPort: 80
+  httpPort: 3200
   type: ClusterIP
 
 # Default Spring configuration
@@ -55,6 +60,24 @@ spring:
     # Please define your name of Connector and Nebula/ControlCenter username and password to attach it
     # All the other spring properties can be customized as well
     content: |-
+      management:
+        endpoints:
+          web:
+            exposure:
+              include: health,info,metrics,loggers
+        endpoint:
+          health:
+            show-details: always
+            group:
+              readiness:
+                show-details: always
+                exclude: connection
+              liveness:
+                show-details: always
+                exclude: connection
+
+      server.port: 3200
+
       connector:
         cc-url: https://portal.gridgain.com/
         # Connector url reachable from monitored clusters node. This url is used for cluster exporters configuration.
