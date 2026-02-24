@@ -22,7 +22,7 @@ image:
   repository: gridgain/gridgain9
   # -- GridGain image tag. Immutable tags are recommended
   # -- if not set appVersion field from Chart.yaml is used
-  tag: 
+  tag:
   # -- GridGain image pull policy
   # -- Specify a imagePullPolicy [imagePullPolicy](https://kubernetes.io/docs/user-guide/images/#pre-pulling-images)
   # -- Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -57,10 +57,10 @@ license: {}
 #   mountPath: /opt/gridgain/etc/license9.conf
 # # -- Create secret with license from file inside chart folder
 #   fromFile:
-# # -- Relative path to file inside chart folder 
+# # -- Relative path to file inside chart folder
 #     filepath: files/configmaps/license9.conf
 # # -- Create secret from raw content passed
-#   createSecret: 
+#   createSecret:
 #     mountPath: /opt/gridgain/etc/license9.conf
 # # -- License raw content
 #     content: |
@@ -76,7 +76,7 @@ clusterConfig:
 # -- path inside GridGain init container to mount the file with cluster config
   mountPath: /etc/gridgain9db/cluster.conf
 # -- Create secret from raw content passed
-  createSecret: 
+  createSecret:
     mountPath: /etc/gridgain9db/cluster.conf
 # -- Cluster config raw content
     content: |
@@ -102,7 +102,7 @@ clusterConfig:
 #       }
 # -- Create secret with cluster config from file inside chart folder
 #   fromFile:
-# # -- Relative path to file inside chart folder 
+# # -- Relative path to file inside chart folder
 #     filepath: files/configmaps/cluster.json
 # -- Existing secret with cluster config to be mounted
 #   useExisting:
@@ -114,7 +114,7 @@ clusterConfig:
 # -- Number of GridGain cluster replicas
 replicaCount: 3
 
-# -- GridGain  main configuration to be injected as ConfigMap. 
+# -- GridGain  main configuration to be injected as ConfigMap.
 # @default -- Check default values.yaml to view default config
 configMaps: {}
 
@@ -226,7 +226,7 @@ readinessProbe:
 # @default -- Check defaults below
 startupProbe:
   # -- Enables startupProbe on GridGain container
-  enabled: true
+  enabled: false
   # -- Path and port for probe
   httpGet:
     path: /health/liveness
@@ -308,7 +308,7 @@ updateStrategy:
 # -- GridGain  statefulset strategy type
   type: RollingUpdate
 # -- GridGain  statefulset rolling update configuration parameters
-  rollingUpdate: 
+  rollingUpdate:
     partition: 0
 # -- Optionally specify extra list of additional volumeMounts for the GridGain  container(s)
 extraVolumeMounts: []
@@ -350,7 +350,7 @@ containerPorts:
   - containerPort: 9404
     protocol: TCP
 
-# -- Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP. 
+# -- Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP.
 # @default -- check default services configuration in values.yaml
 services:
   headless:
@@ -446,7 +446,7 @@ persistence:
       #   matchLabels:
       #     app: my-app
 
-# -- [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for GridGain to use. 
+# -- [Service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for GridGain to use.
 # @default -- Check defaults below
 serviceAccount:
   # -- Enable creation of ServiceAccount for GridGain pod
@@ -458,7 +458,7 @@ serviceAccount:
   # -- Additional custom annotations for the ServiceAccount
   annotations: {}
 
-# -- [RBAC configuration](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for ServiceAccount. 
+# -- [RBAC configuration](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for ServiceAccount.
 rbac:
   # -- Creates default Role and RoleBinding
   create: true
