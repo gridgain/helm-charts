@@ -103,7 +103,7 @@ spec:
           echo "Using StatefulSet naming pattern for cluster initialization"
           echo "Replica count: $REPLICAS"
 
-          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --cluster-management-group $CMG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license={{ .Values.license.mountPath }} --config-files={{ .Values.clusterConfig.mountPath }}
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license={{ .Values.license.mountPath }} --config-files={{ .Values.clusterConfig.mountPath }}
         command:
         - /bin/bash
         # Specify the Docker image with the GridGain 9 CLI and its version.
