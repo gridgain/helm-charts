@@ -10,7 +10,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "gridgain9.fullname" . }}-init-job
+  name: {{ include "gridgain9.fullname" . }}-init-job-{{ .Release.Revision }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "gridgain9.labels" . | nindent 4 }}
   {{- if or .Values.commonAnnotations .Values.annotations }}
@@ -19,6 +19,7 @@ metadata:
   {{- toYaml $annotations | nindent 4 }}
   {{- end }}
 spec:
+  ttlSecondsAfterFinished: 300
   template:
     metadata:
       {{- if .Values.podAnnotations }}
