@@ -10,18 +10,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "gridgain9.fullname" . }}-init-job
+  name: {{ include "gridgain9.fullname" . }}-init-job-{{ .Release.Revision }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "gridgain9.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "0"
-    "helm.sh/hook-delete-policy": before-hook-creation
   {{- if or .Values.commonAnnotations .Values.annotations }}
+  annotations:
   {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
   {{- toYaml $annotations | nindent 4 }}
   {{- end }}
 spec:
+  ttlSecondsAfterFinished: 300
   template:
     metadata:
       {{- if .Values.podAnnotations }}
@@ -53,15 +51,15 @@ spec:
         - -ec
         - |
           set -x
-          
+
           # Get the number of replicas from the StatefulSet or use default
           REPLICAS=${REPLICAS:-1}
-          
+
           # Wait for GridGain service to be available and all nodes to be ready
           echo "Waiting for GridGain service to be available..."
           SERVICE_HOST="{{ include "gridgain9.fullname" . }}-headless"
           SERVICE_PORT="{{ .Values.services.headless.ports.management }}"
-          
+
           # Wait for service to be available
           retries=60 # 5 minutes
           while ! timeout 5 bash -c "</dev/tcp/${SERVICE_HOST}/${SERVICE_PORT}" 2>/dev/null; do
@@ -74,7 +72,16 @@ spec:
             sleep 5
           done
           echo "GridGain service is available"
-          
+
+          # Check if cluster is already initialized to ensure idempotency
+          echo "Checking if cluster is already initialized..."
+          CLUSTER_STATUS=$(/opt/gridgain9cli/bin/gridgain9 cluster status --url=http://${SERVICE_HOST}:${SERVICE_PORT} 2>&1 || true)
+          if echo "$CLUSTER_STATUS" | grep -qi "active"; then
+            echo "Cluster is already initialized and active, skipping init"
+            exit 0
+          fi
+          echo "Cluster is not yet initialized, proceeding..."
+
           # Wait for last node to be ready using GridGain CLI
           echo "Waiting for last node to be ready..."
           retries=60 # 5 minutes
@@ -92,36 +99,12 @@ spec:
             fi
             sleep 5
           done
-          
-          # Calculate CMG and Metastorage group sizes according to GridGain recommendations
-          if [ $REPLICAS -le 3 ]; then
-            # For clusters ≤3 nodes: all nodes are used for both CMG and metastorage
-            CMG_SIZE=$REPLICAS
-          elif [ $REPLICAS -eq 4 ]; then
-            # For clusters =4 nodes: three nodes are used (to maintain odd number)
-            CMG_SIZE=3
-          else
-            # For clusters ≥5 nodes: five nodes are used (to balance fault tolerance and overhead)
-            CMG_SIZE=5
-          fi
-          
-          # Build CMG node list (first N nodes)
-          CMG_NODES=""
-          for i in $(seq 0 $((CMG_SIZE-1))); do
-            if [ -n "$CMG_NODES" ]; then
-              CMG_NODES="$CMG_NODES,{{ include "gridgain9.fullname" . }}-$i"
-            else
-              CMG_NODES="{{ include "gridgain9.fullname" . }}-$i"
-            fi
-          done
-          
+
           # Log the approach being used
           echo "Using StatefulSet naming pattern for cluster initialization"
           echo "Replica count: $REPLICAS"
-          echo "CMG size: $CMG_SIZE"
-          echo "CMG nodes: $CMG_NODES"
-          
-          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --cluster-management-group $CMG_NODES --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license={{ .Values.license.mountPath }} --config-files={{ .Values.clusterConfig.mountPath }}
+
+          /opt/gridgain9cli/bin/gridgain9 cluster init --name={{ include "gridgain9.fullname" . }} --url=http://{{ include "gridgain9.fullname" . }}-headless:{{ .Values.services.headless.ports.management }} --license={{ .Values.license.mountPath }} --config-files={{ .Values.clusterConfig.mountPath }}
         command:
         - /bin/bash
         # Specify the Docker image with the GridGain 9 CLI and its version.
