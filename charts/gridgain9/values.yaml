@@ -16,13 +16,19 @@ podAnnotations: {}
 customLabels: {}
 
 image:
-  # -- GridGain image registry
-  registry: docker.io
-  # -- GridGain image repository
-  repository: gridgain/gridgain9
-  # -- GridGain image tag. Immutable tags are recommended
-  # -- if not set appVersion field from Chart.yaml is used
-  tag:
+  # -- Image flavor to use. Must be one of the keys defined in image.flavors
+  flavor: openjdk17
+  # -- Available image flavors mapping flavor name to repository and tag
+  flavors:
+    openjdk17:
+      repository: gridgain/gridgain9
+      tag: 9.1.21-openjdk17
+    corretto17:
+      repository: gridgain/gridgain9
+      tag: 9.1.21-corretto17
+    rocky17:
+      repository: gridgain/gridgain9
+      tag: 9.1.21-rocky17
   # -- GridGain image pull policy
   # -- Specify a imagePullPolicy [imagePullPolicy](https://kubernetes.io/docs/user-guide/images/#pre-pulling-images)
   # -- Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'

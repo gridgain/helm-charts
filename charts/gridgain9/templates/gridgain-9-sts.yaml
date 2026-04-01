@@ -99,7 +99,7 @@ spec:
           {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) | nindent 10 }}
           {{- end }}
         # GridGains Docker image and it's version.
-        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        image: "{{ include "gridgain9.image" . }}"
         ports: {{- toYaml .Values.containerPorts | nindent 8 }}
         volumeMounts:
         {{- if .Values.license.useExisting }}

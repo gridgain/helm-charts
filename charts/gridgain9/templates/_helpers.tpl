@@ -74,6 +74,15 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{/*
+Resolve the full image reference from the selected flavor.
+Usage: {{ include "gridgain9.image" . }}
+*/}}
+{{- define "gridgain9.image" -}}
+{{- $flavor := index .Values.image.flavors .Values.image.flavor -}}
+{{- printf "%s:%s" $flavor.repository $flavor.tag -}}
+{{- end -}}
+
 {{- define "createConfigmap" -}}
 {{- if not .Values.existingConfigmap -}}
     {{- true -}}
