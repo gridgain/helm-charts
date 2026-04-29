@@ -63,6 +63,7 @@ Older version of Kubernetes and Helm vere not tested so use it at your peril.
 | extraVolumeMounts | list | `[]` | Optionally specify extra list of additional volumeMounts for the GridGain DB  container(s) |
 | extraVolumes | list | `[]` | Optionally specify extra list of additional volumes for the GridGain DB  pod(s) |
 | fullnameOverride | string | `""` | String to fully override common.names.fullname template |
+| ignite.shutdownPolicy | string | `"IMMEDIATE"` | Ignite node shutdown policy rendered into the default Ignite configuration XML. |
 | igniteWorkDir | string | `"/persistence"` | GridGain [persistent storage directory](https://www.gridgain.com/docs/latest/developers-guide/persistence/native-persistence#configuring-persistent-storage-directory) |
 | image.pullPolicy | string | `"IfNotPresent"` | Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent' |
 | image.registry | string | `"docker.io"` | GridGain DB image registry |

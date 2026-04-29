@@ -74,6 +74,10 @@ jvmOpts: |
 # -- GridGain [persistent storage directory](https://www.gridgain.com/docs/latest/developers-guide/persistence/native-persistence#configuring-persistent-storage-directory)
 igniteWorkDir: /persistence
 
+ignite:
+  # -- Ignite node shutdown policy rendered into the default Ignite configuration XML.
+  shutdownPolicy: IMMEDIATE
+
 # -- [GridGain DB license](https://www.gridgain.com/docs/latest/installation-guide/licenses) to be created or mounted as a secret. Needed to use GridGain Enterprise Edition (EE) or Ultimate Edition (UE)
 license: {}
 # license:

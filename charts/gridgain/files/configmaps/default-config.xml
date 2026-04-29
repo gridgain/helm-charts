@@ -24,6 +24,8 @@
 
     <bean class="org.apache.ignite.configuration.IgniteConfiguration">
 
+        <property name="shutdownPolicy" value="{{ .Values.ignite.shutdownPolicy }}"/>
+
         <property name="discoverySpi">
             <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
                 <property name="ipFinder">
