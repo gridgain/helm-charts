@@ -78,6 +78,9 @@ spec:
         {{- if .Values.containerSecurityContext }}
         securityContext: {{- toYaml .Values.containerSecurityContext | nindent 10 }}
         {{- end }}
+        {{- if .Values.lifecycleHooks }}
+        lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 10 }}
+        {{- end }}
         {{- if .Values.startupProbe.enabled }}
         startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.startupProbe "enabled") "context" $) | nindent 10 }}
         {{- end }}
