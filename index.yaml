@@ -100,6 +100,24 @@ entries:
   gridgain:
   - apiVersion: v2
     appVersion: 8.9.11
+    created: "2026-04-29T12:52:09.218181839Z"
+    description: GridGain is a Unified Real-Time Data Platform by the original creators
+      of Apache Ignite. It enables a simplified and optimized data architecture for
+      enterprises that require extreme speed, massive scale, and high availability
+      from their data ecosystem.
+    digest: 2823c79dbda9871df8862a297de76bde1530d3b8eb3f7a298f908f8b0ce520df
+    home: https://www.gridgain.com/
+    maintainers:
+    - name: GridGain Systems, Inc. All Rights Reserved
+      url: https://www.gridgain.com/
+    name: gridgain
+    sources:
+    - https://github.com/gridgain/helm-charts/tree/main/charts/gridgain
+    urls:
+    - https://github.com/gridgain/helm-charts/releases/download/gridgain-1.0.6/gridgain-1.0.6.tgz
+    version: 1.0.6
+  - apiVersion: v2
+    appVersion: 8.9.11
     created: "2026-01-29T13:15:49.980007312Z"
     description: GridGain is a Unified Real-Time Data Platform by the original creators
       of Apache Ignite. It enables a simplified and optimized data architecture for
@@ -432,4 +450,4 @@ entries:
     urls:
     - https://github.com/gridgain/helm-charts/releases/download/gridgain9-1.0.0/gridgain9-1.0.0.tgz
     version: 1.0.0
-generated: "2026-02-25T11:38:21.87093201Z"
+generated: "2026-04-29T12:52:09.218276185Z"
