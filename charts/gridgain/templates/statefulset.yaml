@@ -205,7 +205,7 @@ spec:
       serviceAccount: {{ .Values.serviceAccount.name | default (include "gridgain.fullname" .) }}
       serviceAccountName: {{ .Values.serviceAccount.name | default (include "gridgain.fullname" .) }}
       {{- end }}
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
       {{- range $key, $value := .Values.persistence.volumes }}
       {{- if and $value.enabled $value.existingClaim }}
