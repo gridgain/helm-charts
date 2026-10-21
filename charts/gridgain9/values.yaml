@@ -6,7 +6,7 @@ fullnameOverride: ""
 commonAnnotations: {}
 # -- Map of labels
 labels: {}
-# -- Annotations for GridGain resources
+# -- Annotations for the cluster init job. Use it for CD tool hook annotations, e.g. `argocd.argoproj.io/hook`
 annotations: {}
 # -- Map of labels to add to the pods
 podLabels: {}
@@ -255,6 +255,12 @@ resources:
     cpu: "1"
     # -- The requested memory for the GridGain  containers
     memory: 2Gi
+
+initJob:
+  # -- Create the Job that initializes the cluster. Can be disabled once the cluster is initialized
+  enabled: true
+  # -- Seconds after which the finished init Job is deleted. Set to null to keep the finished Job, e.g. when Argo CD manages the release
+  ttlSecondsAfterFinished: 300
 
 # -- Hook job [resource](https://kubernetes.io/docs/user-guide/compute-resources/) requests and limits for init and recovery jobs
 # @default -- Check defaults below
