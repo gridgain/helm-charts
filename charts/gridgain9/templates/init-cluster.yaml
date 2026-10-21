@@ -7,6 +7,7 @@
 #  \____/   /_/     /_/   \_,__/   \____/   \__,_/  /_/   /_/ /_/
 #
 
+{{- if .Values.initJob.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -16,10 +17,12 @@ metadata:
   {{- if or .Values.commonAnnotations .Values.annotations }}
   annotations:
   {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.annotations .Values.commonAnnotations ) "context" . ) }}
-  {{- toYaml $annotations | nindent 4 }}
+  {{- $annotations | nindent 4 }}
   {{- end }}
 spec:
-  ttlSecondsAfterFinished: 300
+  {{- if not (kindIs "invalid" .Values.initJob.ttlSecondsAfterFinished) }}
+  ttlSecondsAfterFinished: {{ .Values.initJob.ttlSecondsAfterFinished }}
+  {{- end }}
   template:
     metadata:
       {{- if .Values.podAnnotations }}
@@ -73,14 +76,44 @@ spec:
           done
           echo "GridGain service is available"
 
-          # Check if cluster is already initialized to ensure idempotency
+          # Check if cluster is already initialized to ensure idempotency.
+          # The REST status code is used instead of CLI output: an initialized cluster with
+          # authentication enabled rejects anonymous requests with 401, while an uninitialized
+          # cluster never enforces authentication and answers 409.
           echo "Checking if cluster is already initialized..."
-          CLUSTER_STATUS=$(/opt/gridgain9cli/bin/gridgain9 cluster status --url=http://${SERVICE_HOST}:${SERVICE_PORT} 2>&1 || true)
-          if echo "$CLUSTER_STATUS" | grep -qi "active"; then
-            echo "Cluster is already initialized and active, skipping init"
-            exit 0
-          fi
-          echo "Cluster is not yet initialized, proceeding..."
+          cluster_state_code() {
+            local code
+            exec 3<>"/dev/tcp/${SERVICE_HOST}/${SERVICE_PORT}" || return 1
+            printf 'GET /management/v1/cluster/state HTTP/1.0\r\nHost: %s\r\n\r\n' "${SERVICE_HOST}" >&3
+            read -r -t 10 _ code _ <&3
+            exec 3<&-
+            echo "${code}"
+          }
+          retries=12 # 1 minute
+          while true; do
+            STATE_CODE=$(cluster_state_code 2>/dev/null || true)
+            case "${STATE_CODE}" in
+              200)
+                echo "Cluster is already initialized, skipping init"
+                exit 0
+                ;;
+              401|403)
+                echo "Cluster is already initialized with authentication enabled, skipping init"
+                exit 0
+                ;;
+              409)
+                echo "Cluster is not yet initialized, proceeding..."
+                break
+                ;;
+            esac
+            echo "Unexpected cluster state response '${STATE_CODE}' (retries left: $retries)"
+            retries=$((retries-1))
+            if [ "$retries" -eq 0 ]; then
+              echo "ERROR: Could not determine cluster state"
+              exit 1
+            fi
+            sleep 5
+          done
 
           # Wait for last node to be ready using GridGain CLI
           echo "Waiting for last node to be ready..."
@@ -160,3 +193,4 @@ spec:
         secret:
           secretName: {{ printf "%s-%s" (include "gridgain9.fullname" .) "cluster-config" }}
       {{- end }}
+{{- end }}

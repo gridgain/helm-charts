@@ -36,12 +36,44 @@ When running GridGain 9 in a Kubernetes environment, the node configuration beco
 >
 > While it is technically possible to make the node configuration writable by using an init container that copies the mounted configuration from one location to another (and pointing GridGain 9 to this new location), we **strongly discourage** this approach. It is not native to the Kubernetes model, and any changes made to the configuration will be lost during pod restarts or re-deployments.
 
+## Cluster initialization
+
+The chart creates a Job that runs `gridgain9 cluster init` once all nodes have joined. The Job is idempotent: it checks the cluster state over REST first and exits successfully if the cluster is already initialized, including clusters with authentication enabled.
+
+### Argo CD
+
+Argo CD renders the chart with `helm template`, so the init Job always has the same name and is tracked as a regular resource. When `ttlSecondsAfterFinished` deletes the finished Job, Argo CD reports the application as OutOfSync and self-heal recreates it. Use one of the following:
+
+- Keep the finished Job, so there is nothing to recreate:
+
+  ```yaml
+  initJob:
+    ttlSecondsAfterFinished: null
+  ```
+
+- Run the Job as an Argo CD hook:
+
+  ```yaml
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  ```
+
+  Argo CD runs hooks on every sync. Runs after the first one exit right away because the cluster is already initialized. Do not put hook annotations into `commonAnnotations`, which applies them to every resource of the release.
+
+- Disable the Job once the cluster is initialized:
+
+  ```yaml
+  initJob:
+    enabled: false
+  ```
+
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | [Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity) for GridGain  pods assignment |
-| annotations | object | `{}` | Annotations for GridGain resources |
+| annotations | object | `{}` | Annotations for the cluster init job. Use it for CD tool hook annotations, e.g. `argocd.argoproj.io/hook` |
 | args | list | `[]` | Override default container args (useful when using custom images) |
 | clusterConfig.createSecret | object | `{"content":"{}\n","mountPath":"/etc/gridgain9db/cluster.conf"}` | Create secret from raw content passed |
 | clusterConfig.createSecret.content | string | `"{}\n"` | Cluster config raw content |
@@ -74,6 +106,8 @@ When running GridGain 9 in a Kubernetes environment, the node configuration beco
 | image.repository | string | `"gridgain/gridgain9"` | GridGain image repository |
 | image.tag | string | `nil` | if not set appVersion field from Chart.yaml is used |
 | imagePullSecrets | list | `[]` | Name of the secret to pull a docker image from [private registry](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) |
+| initJob.enabled | bool | `true` | Create the Job that initializes the cluster. Can be disabled once the cluster is initialized |
+| initJob.ttlSecondsAfterFinished | int | `300` | Seconds after which the finished init Job is deleted. Set to null to keep the finished Job, e.g. when Argo CD manages the release |
 | initContainers | list | `[]` | Add additional init containers to the GridGain  pod(s) |
 | jmx | object | `{"agent":{"image":"busybox:1.36","pullPolicy":"IfNotPresent","resources":{"limits":{"cpu":"100m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}},"config":"lowercaseOutputName: true\nlowercaseOutputLabelNames: true\n","enabled":false,"port":9404}` | JMX configuration for metrics exposure |
 | jmx.agent | object | `{"image":"busybox:1.36","pullPolicy":"IfNotPresent","resources":{"limits":{"cpu":"100m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}}` | JMX agent configuration |
