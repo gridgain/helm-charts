@@ -94,7 +94,7 @@ configMaps:
             {
               engine=aipersist
               name=default
-              size=1073741824  # 1GB storage profile size
+              sizeBytes=1073741824  # 1GB storage profile size
             }
           ]
         }
