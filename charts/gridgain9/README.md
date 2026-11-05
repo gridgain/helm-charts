@@ -211,7 +211,7 @@ Argo CD renders the chart with `helm template`, so the init Job always has the s
 | serviceMonitor.selector | object | `{}` | ServiceMonitor selector |
 | serviceMonitor.targetLabels | list | `[]` | ServiceMonitor targetLabels |
 | serviceMonitor.targetLimit | int | `0` | ServiceMonitor targetLimit |
-| services | object | check default services configuration in values.yaml | Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP.  |
+| services | object | check default services configuration in values.yaml | Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP. Set `trafficDistribution` on a service to prefer topologically close endpoints (Kubernetes 1.31+).  |
 | sidecars | list | `[]` | Add additional sidecar containers to the GridGain  pod(s) |
 | startupProbe | object | Check defaults below | Configures (startup probe)[https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes] for GridGain container |
 | startupProbe.enabled | bool | `false` | Enables startupProbe on GridGain container |

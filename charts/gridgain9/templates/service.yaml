@@ -41,6 +41,9 @@ spec:
   {{- if $value.sessionAffinity }}
   sessionAffinity: {{ $value.sessionAffinity }}
   {{- end }}
+  {{- if $value.trafficDistribution }}
+  trafficDistribution: {{ $value.trafficDistribution }}
+  {{- end }}
   {{- if $value.publishNotReadyAddresses }}
   publishNotReadyAddresses: {{ $value.publishNotReadyAddresses }}
   {{- end }}
