@@ -305,6 +305,14 @@ tolerations: []
 priorityClassName: ""
 # -- [Topology Spread Constraints](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods) for pod assignment spread across your cluster among failure-domains. Evaluated as a template
 topologySpreadConstraints: []
+# topologySpreadConstraints:
+#   - maxSkew: 1
+#     topologyKey: topology.kubernetes.io/zone
+#     whenUnsatisfiable: ScheduleAnyway
+#     labelSelector:
+#       matchLabels:
+#         app.kubernetes.io/name: gridgain9
+#         app.kubernetes.io/instance: "{{ .Release.Name }}"
 # -- Seconds GridGain  pod needs to [terminate gracefully](https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods)
 terminationGracePeriodSeconds: 30
 
@@ -356,7 +364,7 @@ containerPorts:
   - containerPort: 9404
     protocol: TCP
 
-# -- Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP.
+# -- Default GridGain  service configuration. By default all the existing ports are exposed using headless service. REST and thin-client port are exposed via ClusterIP. Set `trafficDistribution` on a service to prefer topologically close endpoints (Kubernetes 1.31+).
 # @default -- check default services configuration in values.yaml
 services:
   headless:
@@ -374,6 +382,8 @@ services:
   #   type: LoadBalancer
   # -- Enable [client source IP preservation(https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip)
   #   externalTrafficPolicy: Cluster
+  # -- [Traffic distribution](https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution) preference: PreferSameZone or PreferSameNode (Kubernetes 1.34+). PreferClose works on 1.31+ but newer clusters warn that it is deprecated in favour of PreferSameZone
+  #   trafficDistribution: PreferSameZone
   #   ports:
   #     rest: 10800
   #     management: 10300
